@@ -18,6 +18,6 @@ jobs:
         run: |
           test -d backend
           test -d frontend
-          test -d docs
+          test -d infra
           test -f README.md
           echo "Structure du monorepo validée."
