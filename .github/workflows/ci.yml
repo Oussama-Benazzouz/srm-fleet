@@ -10,6 +10,8 @@ jobs:
   sanity-check:
     name: Vérification de base
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Récupération du code
         uses: actions/checkout@v4
