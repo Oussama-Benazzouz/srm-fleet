@@ -1,0 +1,29 @@
+### Java / Maven ###
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+!**/lib/*.jar
+
+### Node / Angular ###
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+npm-debug.log*
+
+### Environnement ###
+.env
+*.local
+
+### Docker ###
+*.pid
+
+### IDE ###
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+### Logs ###
+*.log
+logs/
