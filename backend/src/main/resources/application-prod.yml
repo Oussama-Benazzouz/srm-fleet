@@ -1,0 +1,3 @@
+logging:
+  level:
+    ma.srm.fleet: INFO
