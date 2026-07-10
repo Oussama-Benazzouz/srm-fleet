@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  sanity-check:
+    name: Vérification de base
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Vérifier la présence de la structure attendue
+        run: |
+          test -d backend
+          test -d frontend
+          test -d docs
+          test -d infra
+          test -f README.md
+          echo "Structure du monorepo validée."
