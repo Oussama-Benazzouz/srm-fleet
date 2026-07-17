@@ -1,3 +1,11 @@
 logging:
   level:
     ma.srm.fleet: DEBUG
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/srm_fleet
+    username: srm_user
+    password: change-me
+  flyway:
+    out-of-order: true
