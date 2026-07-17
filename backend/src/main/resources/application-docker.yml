@@ -1,6 +1,0 @@
-# Phase 1 : le backend ne se connecte à aucune base. Ce profil ne configure que le logging
-#La datasource sera ajoutée en Phase 2,sans toucher au reste.
-
-logging:
-  level:
-    ma.srm.fleet: INFO
