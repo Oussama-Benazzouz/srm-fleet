@@ -8,35 +8,62 @@ on:
 
 jobs:
   backend:
-    name: Backend - build et tests
+    name: Backend — build & tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: srm_fleet_test
+          POSTGRES_USER: srm_user
+          POSTGRES_PASSWORD: change-me
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U srm_user -d srm_fleet_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
           cache: maven
+
       - name: Build et tests Maven
         working-directory: backend
-        run: ./mvnw -B -ntp clean verify
+        run: ./mvnw -B clean verify
 
   frontend:
-    name: Frontend - lint et build
+    name: Frontend — lint & build
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Installation des dependances
+
+      - name: Installation des dépendances
         working-directory: frontend
         run: npm ci
+
       - name: Lint
         working-directory: frontend
         run: npm run lint
+
       - name: Build
         working-directory: frontend
         run: npm run build -- --configuration production
