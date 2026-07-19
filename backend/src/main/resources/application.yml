@@ -1,6 +1,12 @@
 spring:
   application:
     name: srm-fleet-backend
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
 
 management:
   endpoints:
