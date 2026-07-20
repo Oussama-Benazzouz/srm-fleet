@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/srm_fleet_test
+    username: srm_user
+    password: change-me
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
