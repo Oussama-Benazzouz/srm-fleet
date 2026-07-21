@@ -39,6 +39,8 @@ jobs:
 
       - name: Build et tests Maven
         working-directory: backend
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: ./mvnw -B clean verify
 
   frontend:

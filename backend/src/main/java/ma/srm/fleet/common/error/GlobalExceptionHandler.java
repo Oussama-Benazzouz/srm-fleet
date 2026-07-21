@@ -1,11 +1,16 @@
 package ma.srm.fleet.common.error;
 
 import ma.srm.fleet.common.exception.BusinessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
 
 /**
  * Gestionnaire global des exceptions de l'application.
@@ -20,6 +25,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+
     /**
      * Traite les exceptions liées aux règles métier.
      *
@@ -32,6 +40,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public ProblemDetail handleBusiness(BusinessException ex){
+        log.warn("Erreur métier: {}", ex.getMessage());
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
         problemDetail.setTitle("Erreur Métier");
         return problemDetail;
@@ -50,6 +59,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex){
+        log.warn("Erreur de validation: {}", ex.getMessage());
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
             "Un ou plusieurs champs sont invalides");
         problemDetail.setTitle("Erreur de validation");
@@ -71,6 +81,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex){
+        log.error("Erreur inattendue", ex);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Une erreur inattendue est survenue."
