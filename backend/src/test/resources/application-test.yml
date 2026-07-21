@@ -8,3 +8,8 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+
+app:
+  jwt:
+    secret: 09f91f6e5263649402c1198682f69945d5be9f8c4f835edf707acdfcd9a18b5e
+    expiration-ms: 3600000
