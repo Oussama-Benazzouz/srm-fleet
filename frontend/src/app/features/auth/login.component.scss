@@ -1,0 +1,135 @@
+/* Page de connexion — construite sur les primitives de styles.scss.
+   Aucune couleur n'est codée en dur : tout provient des tokens. */
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-5);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--s-5);
+  background: var(--c-bg);
+}
+
+.login__panel {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--s-6);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-md);
+}
+
+/* --- En-tête --- */
+
+.login__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: var(--s-6);
+}
+
+.login__logo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--s-4);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--c-text-invert);
+  background: var(--c-accent);
+  border-radius: var(--r-md);
+}
+
+.login__title {
+  font-size: var(--fs-xl);
+}
+
+.login__subtitle {
+  margin-top: var(--s-2);
+  font-size: var(--fs-md);
+  color: var(--c-text-muted);
+}
+
+/* --- Formulaire --- */
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.alert__icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+}
+
+/* Champ mot de passe : le bouton d'affichage se superpose à l'intérieur. */
+.login__password {
+  position: relative;
+  display: flex;
+
+  .input {
+    padding-right: 2.75rem;
+  }
+}
+
+.login__reveal {
+  position: absolute;
+  top: 50%;
+  right: var(--s-1);
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--c-text-subtle);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--transition);
+
+  &:hover {
+    color: var(--c-text);
+  }
+
+  svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+/* Le bouton principal se détache légèrement du formulaire. */
+.login__form .btn--primary {
+  margin-top: var(--s-2);
+}
+
+.login__footer {
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+}
+
+/* --- Adaptatif --- */
+
+/* Sur petit écran, la carte occupe toute la largeur sans ombre marquée. */
+@media (max-width: 480px) {
+  .login {
+    justify-content: flex-start;
+    padding: var(--s-6) var(--s-4) var(--s-4);
+  }
+
+  .login__panel {
+    padding: var(--s-5) var(--s-4);
+    box-shadow: none;
+  }
+}
