@@ -18,7 +18,13 @@ export const routes: Routes = [
         title: 'Tableau de bord — SRM Flotte',
         loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
       },
-      // Les routes d'administration seront ajoutées ici
+      {
+        path: 'administration',
+        loadChildren: () =>
+          import('./features/administration/administration.routes').then(
+            (m) => m.ADMINISTRATION_ROUTES,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
