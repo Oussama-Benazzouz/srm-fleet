@@ -1,1 +1,350 @@
-/* You can add global styles to this file, and also import other style files */
+/* =========================================================================
+   SRM — Gestion de flotte : socle de design
+   -------------------------------------------------------------------------
+   Ce fichier définit l'unique source de vérité visuelle de l'application :
+     1. Tokens        — couleurs, espacements, rayons, ombres, typographie
+     2. Reset & base  — normalisation des éléments natifs
+     3. Primitives    — .card, .btn, .field, .alert, .badge
+     4. Utilitaires   — mise en page et typographie de base
+   Toute nouvelle vue doit se composer à partir de ces primitives plutôt que
+   de redéfinir ses propres styles.
+   ========================================================================= */
+
+/* 1. Tokens ------------------------------------------------------------- */
+
+:root {
+  /* Neutres — l'ossature de l'interface. */
+  --c-bg: #f7f8fa;
+  --c-surface: #ffffff;
+  --c-surface-alt: #f2f3f5;
+  --c-border: #e3e5e9;
+  --c-border-strong: #d0d3da;
+
+  /* Texte — hiérarchie à trois niveaux, suffisante partout. */
+  --c-text: #16181d;
+  --c-text-muted: #5f646e;
+  --c-text-subtle: #8b909a;
+  --c-text-invert: #ffffff;
+
+  /* Accent — une seule couleur de marque, utilisée avec parcimonie. */
+  --c-accent: #14497e;
+  --c-accent-hover: #0f3a66;
+  --c-accent-soft: #eef3f9;
+  --c-accent-ring: rgba(20, 73, 126, 0.28);
+
+  /* Sémantique — réservé aux retours utilisateur. */
+  --c-danger: #b3261e;
+  --c-danger-soft: #fdecea;
+  --c-danger-border: #f5c6c2;
+  --c-success: #1a7f4b;
+  --c-success-soft: #e9f6ef;
+
+  /* Espacement — échelle 4px, à n'utiliser qu'à travers ces paliers. */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+
+  /* Rayons */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-full: 999px;
+
+  /* Ombres — discrètes : la profondeur vient des bordures, pas du flou. */
+  --sh-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --sh-md: 0 4px 12px rgba(16, 24, 40, 0.07);
+  --sh-lg: 0 12px 32px rgba(16, 24, 40, 0.1);
+
+  /* Typographie */
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.875rem;
+  --fs-base: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+
+  /* Mise en page */
+  --sidebar-w: 244px;
+  --header-h: 56px;
+
+  --transition: 140ms ease;
+}
+
+/* 2. Reset & base ------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.011em;
+  color: var(--c-text);
+}
+
+h1 {
+  font-size: var(--fs-xl);
+}
+h2 {
+  font-size: var(--fs-lg);
+}
+h3 {
+  font-size: var(--fs-base);
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+/* Anneau de focus unique pour toute l'application : visible au clavier,
+   invisible à la souris. */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Masque un élément à l'écran en le laissant lisible par un lecteur d'écran. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 3. Primitives --------------------------------------------------------- */
+
+/* --- Surface --- */
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-sm);
+}
+
+/* --- Champs de formulaire --- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.field__label {
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--c-text);
+}
+
+.input {
+  width: 100%;
+  padding: 0.625rem var(--s-3);
+  font: inherit;
+  font-size: var(--fs-base);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: var(--c-text-subtle);
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--c-text-subtle);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+
+.input:disabled {
+  background: var(--c-surface-alt);
+  color: var(--c-text-muted);
+  cursor: not-allowed;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--c-danger);
+}
+
+.field__error {
+  font-size: var(--fs-sm);
+  color: var(--c-danger);
+}
+
+/* --- Boutons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: 0.5rem var(--s-4);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--c-surface-alt);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  color: var(--c-text-invert);
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--c-text-muted);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+}
+
+.btn--block {
+  width: 100%;
+  padding: 0.625rem var(--s-4);
+}
+
+/* --- Indicateur de chargement --- */
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--r-full);
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Messages --- */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  font-size: var(--fs-md);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+}
+
+.alert--danger {
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+  border-color: var(--c-danger-border);
+}
+
+/* --- Badge --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--s-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--c-text-muted);
+  background: var(--c-surface-alt);
+  border-radius: var(--r-full);
+}
+
+/* 4. Utilitaires -------------------------------------------------------- */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-muted {
+  color: var(--c-text-muted);
+}
+.text-sm {
+  font-size: var(--fs-md);
+}
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Respecte le réglage système de réduction des animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
