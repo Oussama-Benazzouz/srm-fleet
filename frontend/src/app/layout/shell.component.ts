@@ -3,23 +3,32 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
-import { Role } from '../core/models/auth.models';
+import { Role, ROLE_LABELS } from '../core/models/auth.models';
 
 /** Entrée de navigation du menu latéral. */
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'fleet' | 'settings';
+  icon: 'dashboard' | 'users' | 'map';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
 
-const NAV_ITEMS: readonly NavItem[] = [{ label: 'Tableau de bord', route: '/', icon: 'dashboard' }];
-
-const ROLE_LABELS: Record<Role, string> = {
-  ADMINISTRATEUR_CENTRAL: 'Administrateur central',
-  RESPONSABLE_PROVINCIAL: 'Responsable provincial',
-};
+const NAV_ITEMS: readonly NavItem[] = [
+  { label: 'Tableau de bord', route: '/', icon: 'dashboard' },
+  {
+    label: 'Comptes utilisateurs',
+    route: '/administration/utilisateurs',
+    icon: 'users',
+    roles: ['ADMINISTRATEUR_CENTRAL'],
+  },
+  {
+    label: 'Provinces',
+    route: '/administration/provinces',
+    icon: 'map',
+    roles: ['ADMINISTRATEUR_CENTRAL'],
+  },
+];
 
 @Component({
   selector: 'app-shell',
@@ -58,9 +67,9 @@ const ROLE_LABELS: Record<Role, string> = {
                       stroke-linejoin="round"
                     />
                   }
-                  @case ('fleet') {
+                  @case ('users') {
                     <path
-                      d="M2.5 12.5h15M4.5 12.5V9l2-3.5h7L15.5 9v3.5M6 15v-2.5M14 15v-2.5"
+                      d="M7.5 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm6 0a2 2 0 1 0 0-4M3 15.5c0-2.2 2-3.5 4.5-3.5s4.5 1.3 4.5 3.5M13 12.2c2 .2 3.5 1.4 3.5 3.3"
                       fill="none"
                       stroke="currentColor"
                       stroke-width="1.4"
@@ -68,13 +77,14 @@ const ROLE_LABELS: Record<Role, string> = {
                       stroke-linejoin="round"
                     />
                   }
-                  @case ('settings') {
+                  @case ('map') {
                     <path
-                      d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm7-2.5-1.8-.6-.5-1.2.8-1.7-1.5-1.5-1.7.8-1.2-.5L10.4 3H9.6l-.7 1.8-1.2.5-1.7-.8-1.5 1.5.8 1.7-.5 1.2L3 10v.8l1.8.7.5 1.2-.8 1.7 1.5 1.5 1.7-.8 1.2.5.7 1.4h.8l.7-1.4 1.2-.5 1.7.8 1.5-1.5-.8-1.7.5-1.2 1.8-.7V10Z"
+                      d="M7.5 4 3 5.8v10L7.5 14l5 2 4.5-1.8v-10L12.5 6l-5-2Zm0 0v10m5-8v10"
                       fill="none"
                       stroke="currentColor"
-                      stroke-width="1.3"
+                      stroke-width="1.4"
                       stroke-linejoin="round"
+                      stroke-linecap="round"
                     />
                   }
                 }
@@ -390,11 +400,19 @@ export class ShellComponent {
     return role ? ROLE_LABELS[role] : '';
   });
 
-  /** Titre affiché dans la barre supérieure, dérivé de la route active. */
+  /**
+   * Titre affiché dans la barre supérieure, dérivé de la route active. On
+   * retient l'entrée dont la route est le plus long préfixe de l'URL courante,
+   * afin que les sous-écrans (formulaires, détails) héritent du titre parent.
+   */
   private readonly url = signal(this.router.url);
-  protected readonly currentLabel = computed(
-    () => NAV_ITEMS.find((item) => item.route === this.url())?.label ?? 'Tableau de bord',
-  );
+  protected readonly currentLabel = computed(() => {
+    const url = this.url();
+    const match = NAV_ITEMS.filter((item) =>
+      item.route === '/' ? url === '/' : url.startsWith(item.route),
+    ).sort((a, b) => b.route.length - a.route.length)[0];
+    return match?.label ?? 'Tableau de bord';
+  });
 
   constructor() {
     this.router.events
