@@ -35,4 +35,7 @@ public class Conducteur extends AuditableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_departement")
     private Departement departement;
+
+    @OneToMany(mappedBy = "conducteur", fetch = FetchType.LAZY)
+    private java.util.List<ma.srm.fleet.conducteur.permis.Permis> permis = new java.util.ArrayList<>();
 }
