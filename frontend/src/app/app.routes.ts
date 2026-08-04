@@ -25,6 +25,11 @@ export const routes: Routes = [
             (m) => m.ADMINISTRATION_ROUTES,
           ),
       },
+      {
+        path: 'conducteurs',
+        loadChildren: () =>
+          import('./features/conducteurs/conducteurs.routes').then((m) => m.CONDUCTEURS_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
