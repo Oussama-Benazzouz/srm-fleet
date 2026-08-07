@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Province, Utilisateur, UtilisateurRequest } from './utilisateur.models';
+import { Departement, Province, Utilisateur, UtilisateurRequest } from './utilisateur.models';
 
 const UTILISATEURS_URL = '/api/v1/utilisateurs';
 const PROVINCES_URL = '/api/v1/provinces';
+const DEPARTEMENTS_URL = '/api/v1/departements';
 
 @Injectable({ providedIn: 'root' })
 export class AdministrationService {
@@ -40,5 +41,13 @@ export class AdministrationService {
 
   creerProvince(libelle: string): Observable<Province> {
     return this.http.post<Province>(PROVINCES_URL, { libelle });
+  }
+
+  listerDepartements(): Observable<Departement[]> {
+    return this.http.get<Departement[]>(DEPARTEMENTS_URL);
+  }
+
+  creerDepartement(libelle: string): Observable<Departement> {
+    return this.http.post<Departement>(DEPARTEMENTS_URL, { libelle });
   }
 }
