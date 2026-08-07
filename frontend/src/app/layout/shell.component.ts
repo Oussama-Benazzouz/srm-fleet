@@ -9,7 +9,7 @@ import { Role, ROLE_LABELS } from '../core/models/auth.models';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'users' | 'map' | 'drivers';
+  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
@@ -26,6 +26,12 @@ const NAV_ITEMS: readonly NavItem[] = [
     label: 'Provinces',
     route: '/administration/provinces',
     icon: 'map',
+    roles: ['ADMINISTRATEUR_CENTRAL'],
+  },
+  {
+    label: 'Départements',
+    route: '/administration/departements',
+    icon: 'building',
     roles: ['ADMINISTRATEUR_CENTRAL'],
   },
   { label: 'Conducteurs', route: '/conducteurs', icon: 'drivers' },
@@ -86,6 +92,16 @@ const NAV_ITEMS: readonly NavItem[] = [
                       stroke-width="1.4"
                       stroke-linejoin="round"
                       stroke-linecap="round"
+                    />
+                  }
+                  @case ('building') {
+                    <path
+                      d="M4 17.5V4.5h8v13M12 8.5h4.5v9M3 17.5h14M6.5 7.5h1.5M6.5 10.5h1.5M6.5 13.5h1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   }
                   @case ('drivers') {

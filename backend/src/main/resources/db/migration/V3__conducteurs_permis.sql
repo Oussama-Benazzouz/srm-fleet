@@ -7,7 +7,8 @@ CREATE TABLE conducteur (
     prenom_conducteur         VARCHAR(100) NOT NULL,
     fonction_conducteur       VARCHAR(100),
     groupe_sanguin_conducteur VARCHAR(3),
-    id_departement            BIGINT REFERENCES departement(id_departement),
+    id_province               BIGINT NOT NULL REFERENCES province(id_province),
+    id_departement            BIGINT NOT NULL REFERENCES departement(id_departement),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP,
     created_by VARCHAR(100),
@@ -26,3 +27,5 @@ CREATE TABLE permis (
 );
 
 CREATE INDEX idx_permis_conducteur ON permis (id_conducteur);
+CREATE INDEX idx_conducteur_province    ON conducteur (id_province);
+CREATE INDEX idx_conducteur_departement ON conducteur (id_departement);

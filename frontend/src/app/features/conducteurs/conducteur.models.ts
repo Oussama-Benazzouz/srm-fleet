@@ -11,8 +11,10 @@ export interface Conducteur {
   prenom: string;
   fonction: string | null;
   groupeSanguin: string | null;
-  departementId: number | null;
-  departementLibelle: string | null;
+  provinceId: number;
+  provinceLibelle: string;
+  departementId: number;
+  departementLibelle: string;
   permis: Permis[];
 }
 
@@ -22,7 +24,14 @@ export interface ConducteurRequest {
   prenom: string;
   fonction: string | null;
   groupeSanguin: string | null;
+  provinceId: number | null;
   departementId: number | null;
+}
+
+export interface ConducteurFilter {
+  recherche?: string;
+  provinceId?: number | null;
+  departementId?: number | null;
 }
 
 export interface PermisRequest {

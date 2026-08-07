@@ -30,6 +30,14 @@ export const ADMINISTRATION_ROUTES: Routes = [
         loadComponent: () =>
           import('./provinces/province-list.component').then((m) => m.ProvinceListComponent),
       },
+      {
+        path: 'departements',
+        title: 'Départements — SRM Flotte',
+        loadComponent: () =>
+          import('./departements/departement-list.component').then(
+            (m) => m.DepartementListComponent,
+          ),
+      },
     ],
   },
 ];
