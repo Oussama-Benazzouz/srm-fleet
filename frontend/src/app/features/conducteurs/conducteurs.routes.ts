@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from '../../core/auth/auth.guard';
 
 export const CONDUCTEURS_ROUTES: Routes = [
   {
@@ -9,6 +10,7 @@ export const CONDUCTEURS_ROUTES: Routes = [
   {
     path: 'nouveau',
     title: 'Nouveau conducteur',
+    canActivate: [adminGuard],
     loadComponent: () => import('./conducteur-form.component').then((m) => m.ConducteurFormComponent),
   },
   {

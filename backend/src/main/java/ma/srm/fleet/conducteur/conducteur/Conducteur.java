@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ma.srm.fleet.common.audit.AuditableEntity;
 import ma.srm.fleet.referentiel.departement.Departement;
+import ma.srm.fleet.referentiel.province.Province;
 
 @Entity
 @Table(name = "conducteur")
@@ -32,10 +33,15 @@ public class Conducteur extends AuditableEntity {
     @Column(name = "groupe_sanguin_conducteur", length = 3)
     private String groupeSanguin;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_departement")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_province", nullable = false)
+    private Province province;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_departement", nullable = false)
     private Departement departement;
 
-    @OneToMany(mappedBy = "conducteur", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "conducteur", fetch = FetchType.LAZY,
+        cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<ma.srm.fleet.conducteur.permis.Permis> permis = new java.util.ArrayList<>();
 }

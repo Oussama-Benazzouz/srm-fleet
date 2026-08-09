@@ -27,3 +27,8 @@ export interface Province {
   id: number;
   libelle: string;
 }
+
+export interface Departement {
+  id: number;
+  libelle: string;
+}
