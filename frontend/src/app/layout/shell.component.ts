@@ -9,7 +9,7 @@ import { Role, ROLE_LABELS } from '../core/models/auth.models';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers';
+  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers' | 'fleet' | 'suppliers';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
@@ -35,6 +35,8 @@ const NAV_ITEMS: readonly NavItem[] = [
     roles: ['ADMINISTRATEUR_CENTRAL'],
   },
   { label: 'Conducteurs', route: '/conducteurs', icon: 'drivers' },
+  { label: 'Véhicules', route: '/vehicules', icon: 'fleet' },
+  { label: 'Fournisseurs', route: '/fournisseurs', icon: 'suppliers' },
 ];
 
 @Component({
@@ -110,6 +112,28 @@ const NAV_ITEMS: readonly NavItem[] = [
                       <circle cx="10" cy="6.5" r="3" />
                       <path d="M4.5 16.5c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" />
                     </svg>
+                  }
+                  @case ('fleet') {
+                    <path
+                      d="M2 13V7h9v6M11 9h3.5L17 12v1h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <circle cx="5.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+                    <circle cx="13.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+                  }
+                  @case ('suppliers') {
+                    <path
+                      d="M3 7l7-3 7 3-7 3-7-3z M3 7v6l7 3 7-3V7 M10 10v6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
                   }
                 }
               </svg>

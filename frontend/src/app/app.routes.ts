@@ -30,6 +30,18 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/conducteurs/conducteurs.routes').then((m) => m.CONDUCTEURS_ROUTES),
       },
+      {
+        path: 'vehicules',
+        loadChildren: () => import('./features/vehicules/flotte.routes').then((m) => m.FLOTTE_ROUTES),
+      },
+      {
+        path: 'fournisseurs',
+        title: 'Fournisseurs',
+        loadComponent: () =>
+          import('./features/fournisseurs/fournisseur-list.component').then(
+            (m) => m.FournisseurListComponent,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
