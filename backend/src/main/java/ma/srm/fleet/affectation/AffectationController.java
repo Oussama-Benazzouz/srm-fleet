@@ -35,6 +35,16 @@ public class AffectationController {
         return service.cloturer(id, req != null ? req : new ClotureRequest(null), principal);
     }
 
+    @GetMapping
+    public java.util.List<AffectationResponse> lister(
+        @RequestParam(required = false) ma.srm.fleet.affectation.StatutAffectation statut,
+        @RequestParam(required = false) Long vehiculeId,
+        @RequestParam(required = false) Long conducteurId,
+        @AuthenticationPrincipal UserPrincipal principal) {
+        return service.lister(
+            new ma.srm.fleet.affectation.dto.AffectationFilter(statut, vehiculeId, conducteurId), principal);
+    }
+
     @GetMapping("/historique/vehicule/{vehiculeId}")
     public List<AffectationResponse> historiqueVehicule(@PathVariable Long vehiculeId,
                                                         @AuthenticationPrincipal UserPrincipal principal) {
