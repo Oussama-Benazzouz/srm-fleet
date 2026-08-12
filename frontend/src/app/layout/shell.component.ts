@@ -9,13 +9,14 @@ import { Role, ROLE_LABELS } from '../core/models/auth.models';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers' | 'fleet' | 'suppliers';
+  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers' | 'fleet' | 'suppliers' | 'link'; 
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Tableau de bord', route: '/', icon: 'dashboard' },
+  { label: 'Affectations', route: '/affectations', icon: 'link' },
   {
     label: 'Comptes utilisateurs',
     route: '/administration/utilisateurs',
@@ -135,6 +136,16 @@ const NAV_ITEMS: readonly NavItem[] = [
                       stroke-linejoin="round"
                     />
                   }
+                   @case ('link') {
+                    <path
+                     d="M8 12a3 3 0 0 0 4 0l2-2a3 3 0 0 0-4-4l-1 1"
+                    fill="none" stroke="currentColor" stroke-width="1.4"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                    d="M12 8a3 3 0 0 0-4 0l-2 2a3 3 0 0 0 4 4l1-1"
+                    fill="none" stroke="currentColor" stroke-width="1.4"
+                    stroke-linecap="round" stroke-linejoin="round" />
+      }
                 }
               </svg>
               <span>{{ item.label }}</span>
