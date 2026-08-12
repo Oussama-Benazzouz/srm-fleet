@@ -159,6 +159,9 @@ import { MODE_LABELS, STATUT_LABELS, StatutVehicule, Vehicule } from './flotte.m
                         <a class="btn btn--sm" [routerLink]="[v.id]">
                           {{ isAdmin() ? 'Modifier' : 'Consulter' }}
                         </a>
+                        <a class="btn btn--sm" [routerLink]="['/affectations/historique/vehicule', v.id]">
+                          Historique
+                        </a>
                       </div>
                     </td>
                   </tr>
