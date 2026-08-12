@@ -3,6 +3,7 @@ package ma.srm.fleet.affectation;
 import java.time.LocalDate;
 import java.util.List;
 import ma.srm.fleet.admin.utilisateur.RoleUtilisateur;
+import ma.srm.fleet.affectation.dto.AffectationFilter;
 import ma.srm.fleet.affectation.dto.AffectationRequest;
 import ma.srm.fleet.affectation.dto.AffectationResponse;
 import ma.srm.fleet.affectation.dto.ClotureRequest;
@@ -123,6 +124,22 @@ public class AffectationService {
         AffectationScope.verifierProvince(c.getProvince(), principal);
         return affectationRepository.findByConducteurIdOrderByDateDebutDesc(conducteurId).stream()
             .map(AffectationMapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AffectationResponse> lister(AffectationFilter filtre, UserPrincipal principal) {
+        Specification<Affectation> spec = Specification.allOf(
+            AffectationSpecifications.statut(filtre.statut()),
+            AffectationSpecifications.vehicule(filtre.vehiculeId()),
+            AffectationSpecifications.conducteur(filtre.conducteurId()));
+
+        if (principal.getRole() == RoleUtilisateur.RESPONSABLE_PROVINCIAL) {
+            if (principal.getProvinceId() == null) {
+                return List.of();   // compte provincial sans province rattachée : périmètre vide
+            }
+            spec = spec.and(AffectationSpecifications.province(principal.getProvinceId()));
+        }
+        return affectationRepository.findAll(spec).stream().map(AffectationMapper::toResponse).toList();
     }
 
     private Affectation charger(Long id) {

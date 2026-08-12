@@ -42,6 +42,11 @@ export const routes: Routes = [
             (m) => m.FournisseurListComponent,
           ),
       },
+       {
+        path: 'affectations',
+        loadChildren: () =>
+          import('./features/affectations/affectations.routes').then((m) => m.AFFECTATIONS_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
