@@ -158,6 +158,9 @@ import { Departement, Province } from '../administration/utilisateur.models';
                         <a class="btn btn--sm" [routerLink]="[c.id]">
                           {{ isAdmin() ? 'Modifier' : 'Consulter' }}
                         </a>
+                        <a class="btn btn--sm" [routerLink]="['/affectations/historique/conducteur', c.id]">
+                          Historique
+                        </a>
                         @if (isAdmin()) {
                           <button
                             type="button"
