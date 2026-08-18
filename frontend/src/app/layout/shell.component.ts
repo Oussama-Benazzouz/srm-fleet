@@ -9,7 +9,7 @@ import { Role, ROLE_LABELS } from '../core/models/auth.models';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers' | 'fleet' | 'suppliers' | 'link'; 
+  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers' | 'fleet' | 'suppliers' | 'link' | 'fuel' | 'card';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
@@ -38,6 +38,8 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Conducteurs', route: '/conducteurs', icon: 'drivers' },
   { label: 'Véhicules', route: '/vehicules', icon: 'fleet' },
   { label: 'Fournisseurs', route: '/fournisseurs', icon: 'suppliers' },
+  { label: 'Demandes carburant', route: '/demandes', icon: 'fuel' },
+  { label: 'Cartes carburant', route: '/cartes', icon: 'card' },
 ];
 
 @Component({
@@ -108,8 +110,15 @@ const NAV_ITEMS: readonly NavItem[] = [
                     />
                   }
                   @case ('drivers') {
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
                       <circle cx="10" cy="6.5" r="3" />
                       <path d="M4.5 16.5c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" />
                     </svg>
@@ -123,8 +132,22 @@ const NAV_ITEMS: readonly NavItem[] = [
                       stroke-linecap="round"
                       stroke-linejoin="round"
                     />
-                    <circle cx="5.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
-                    <circle cx="13.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+                    <circle
+                      cx="5.5"
+                      cy="14.5"
+                      r="1.4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                    />
+                    <circle
+                      cx="13.5"
+                      cy="14.5"
+                      r="1.4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                    />
                   }
                   @case ('suppliers') {
                     <path
@@ -136,16 +159,44 @@ const NAV_ITEMS: readonly NavItem[] = [
                       stroke-linejoin="round"
                     />
                   }
-                   @case ('link') {
+                  @case ('link') {
                     <path
-                     d="M8 12a3 3 0 0 0 4 0l2-2a3 3 0 0 0-4-4l-1 1"
-                    fill="none" stroke="currentColor" stroke-width="1.4"
-                    stroke-linecap="round" stroke-linejoin="round" />
+                      d="M8 12a3 3 0 0 0 4 0l2-2a3 3 0 0 0-4-4l-1 1"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
                     <path
-                    d="M12 8a3 3 0 0 0-4 0l-2 2a3 3 0 0 0 4 4l1-1"
-                    fill="none" stroke="currentColor" stroke-width="1.4"
-                    stroke-linecap="round" stroke-linejoin="round" />
-      }
+                      d="M12 8a3 3 0 0 0-4 0l-2 2a3 3 0 0 0 4 4l1-1"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('fuel') {
+                    <path
+                      d="M5 4.5h6v11H5v-11Zm6 3h2l1.5 1.5v5a1.2 1.2 0 0 1-2.4 0V11H11M5 8h6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('card') {
+                    <path
+                      d="M3 6.5h14v7H3v-7Zm0 2.5h14M6 12h3"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
                 }
               </svg>
               <span>{{ item.label }}</span>

@@ -32,7 +32,8 @@ export const routes: Routes = [
       },
       {
         path: 'vehicules',
-        loadChildren: () => import('./features/vehicules/flotte.routes').then((m) => m.FLOTTE_ROUTES),
+        loadChildren: () =>
+          import('./features/vehicules/flotte.routes').then((m) => m.FLOTTE_ROUTES),
       },
       {
         path: 'fournisseurs',
@@ -42,10 +43,20 @@ export const routes: Routes = [
             (m) => m.FournisseurListComponent,
           ),
       },
-       {
+      {
         path: 'affectations',
         loadChildren: () =>
           import('./features/affectations/affectations.routes').then((m) => m.AFFECTATIONS_ROUTES),
+      },
+      {
+        path: 'demandes',
+        loadChildren: () =>
+          import('./features/carburant/carburant.routes').then((m) => m.DEMANDES_ROUTES),
+      },
+      {
+        path: 'cartes',
+        loadChildren: () =>
+          import('./features/carburant/carburant.routes').then((m) => m.CARTES_ROUTES),
       },
     ],
   },
