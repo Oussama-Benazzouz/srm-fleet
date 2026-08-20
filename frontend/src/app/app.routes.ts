@@ -16,7 +16,8 @@ export const routes: Routes = [
       {
         path: '',
         title: 'Tableau de bord — SRM Flotte',
-        loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
         path: 'administration',
