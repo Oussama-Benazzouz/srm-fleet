@@ -17,6 +17,9 @@ WORKDIR /app
 
 RUN addgroup -S srm && adduser -S srm -G srm
 COPY --from=build /app/target/backend-*.jar app.jar
+# Répertoire des pièces jointes détenu par l'utilisateur applicatif : un volume nommé
+# initialisé sur ce point de montage hérite de cette propriété (sinon root => écriture refusée).
+RUN mkdir -p /app/data/documents && chown -R srm:srm /app/data
 USER srm
 
 EXPOSE 8080

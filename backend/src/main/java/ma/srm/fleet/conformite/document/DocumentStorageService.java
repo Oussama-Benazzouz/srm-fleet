@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import ma.srm.fleet.common.exception.BusinessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -25,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 public class DocumentStorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentStorageService.class);
 
     private final Path racine;
 
@@ -56,6 +60,7 @@ public class DocumentStorageService {
             Files.createDirectories(cible.getParent());
             Files.copy(fichier.getInputStream(), cible);
         } catch (IOException e) {
+            log.error("Échec de l'écriture de la pièce jointe sous {}", cible, e);
             throw new BusinessException("Échec de l'enregistrement du fichier", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return cheminRelatif;
