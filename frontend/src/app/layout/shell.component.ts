@@ -21,7 +21,8 @@ interface NavItem {
     | 'fuel'
     | 'card'
     | 'shield'
-    | 'inspect';
+    | 'inspect'
+    | 'alert';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
@@ -54,6 +55,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Cartes carburant', route: '/cartes', icon: 'card' },
   { label: 'Assurances', route: '/assurances', icon: 'shield' },
   { label: 'Visites techniques', route: '/visites-techniques', icon: 'inspect' },
+  { label: 'Sinistres', route: '/sinistres', icon: 'alert' },
 ];
 
 @Component({
@@ -223,6 +225,16 @@ const NAV_ITEMS: readonly NavItem[] = [
                   @case ('inspect') {
                     <path
                       d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm-3-7 2 2 4-4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('alert') {
+                    <path
+                      d="M10 3.5 2.5 16.5h15L10 3.5Zm0 5v4m0 2.5h.01"
                       fill="none"
                       stroke="currentColor"
                       stroke-width="1.4"

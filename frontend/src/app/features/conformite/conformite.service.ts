@@ -1,7 +1,17 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { Assurance, AssuranceRequest, OptionVehicule, Visite, VisiteRequest } from './conformite.models';
+import {
+  Assurance,
+  AssuranceRequest,
+  OptionVehicule,
+  PieceJointe,
+  Sinistre,
+  SinistreRequest,
+  StatutSinistre,
+  Visite,
+  VisiteRequest,
+} from './conformite.models';
 
 @Injectable({ providedIn: 'root' })
 export class ConformiteService {
@@ -47,5 +57,36 @@ export class ConformiteService {
     return this.http
       .get<{ raisonSociale: string; type: string }[]>('/api/v1/fournisseurs')
       .pipe(map((list) => list.filter((f) => f.type === type).map((f) => f.raisonSociale)));
+  }
+
+  // --- Sinistres (RF-23, RF-24) ---
+  listerSinistres(statut?: StatutSinistre | '', vehiculeId?: number | null): Observable<Sinistre[]> {
+    let params = new HttpParams();
+    if (statut) params = params.set('statut', statut);
+    if (vehiculeId) params = params.set('vehiculeId', vehiculeId);
+    return this.http.get<Sinistre[]>('/api/v1/sinistres', { params });
+  }
+  sinistre(id: number): Observable<Sinistre> {
+    return this.http.get<Sinistre>(`/api/v1/sinistres/${id}`);
+  }
+  creerSinistre(req: SinistreRequest): Observable<Sinistre> {
+    return this.http.post<Sinistre>('/api/v1/sinistres', req);
+  }
+  changerStatutSinistre(id: number, statut: StatutSinistre): Observable<Sinistre> {
+    return this.http.patch<Sinistre>(`/api/v1/sinistres/${id}/statut`, { statut });
+  }
+
+  // --- Pièces jointes (RF-24) ---
+  listerDocuments(sinistreId: number): Observable<PieceJointe[]> {
+    return this.http.get<PieceJointe[]>(`/api/v1/sinistres/${sinistreId}/documents`);
+  }
+  televerserDocument(sinistreId: number, fichier: File): Observable<PieceJointe> {
+    const data = new FormData();
+    data.append('fichier', fichier);
+    return this.http.post<PieceJointe>(`/api/v1/sinistres/${sinistreId}/documents`, data);
+  }
+  /** Contenu binaire d'une pièce jointe (le JWT est ajouté par l'intercepteur). */
+  telechargerDocument(documentId: number): Observable<Blob> {
+    return this.http.get(`/api/v1/documents/${documentId}/contenu`, { responseType: 'blob' });
   }
 }
