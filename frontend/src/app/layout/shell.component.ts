@@ -9,7 +9,19 @@ import { Role, ROLE_LABELS } from '../core/models/auth.models';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers' | 'fleet' | 'suppliers' | 'link' | 'fuel' | 'card';
+  icon:
+    | 'dashboard'
+    | 'users'
+    | 'map'
+    | 'building'
+    | 'drivers'
+    | 'fleet'
+    | 'suppliers'
+    | 'link'
+    | 'fuel'
+    | 'card'
+    | 'shield'
+    | 'inspect';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
@@ -40,6 +52,8 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Fournisseurs', route: '/fournisseurs', icon: 'suppliers' },
   { label: 'Demandes carburant', route: '/demandes', icon: 'fuel' },
   { label: 'Cartes carburant', route: '/cartes', icon: 'card' },
+  { label: 'Assurances', route: '/assurances', icon: 'shield' },
+  { label: 'Visites techniques', route: '/visites-techniques', icon: 'inspect' },
 ];
 
 @Component({
@@ -190,6 +204,25 @@ const NAV_ITEMS: readonly NavItem[] = [
                   @case ('card') {
                     <path
                       d="M3 6.5h14v7H3v-7Zm0 2.5h14M6 12h3"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('shield') {
+                    <path
+                      d="M10 3l6 2v4c0 4-2.7 6.3-6 7.5C6.7 15.3 4 13 4 9V5l6-2Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('inspect') {
+                    <path
+                      d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm-3-7 2 2 4-4"
                       fill="none"
                       stroke="currentColor"
                       stroke-width="1.4"

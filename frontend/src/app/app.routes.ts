@@ -58,6 +58,16 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/carburant/carburant.routes').then((m) => m.CARTES_ROUTES),
       },
+      {
+        path: 'assurances',
+        loadChildren: () =>
+          import('./features/conformite/conformite.routes').then((m) => m.ASSURANCES_ROUTES),
+      },
+      {
+        path: 'visites-techniques',
+        loadChildren: () =>
+          import('./features/conformite/conformite.routes').then((m) => m.VISITES_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
