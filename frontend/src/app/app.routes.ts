@@ -73,6 +73,17 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/conformite/conformite.routes').then((m) => m.SINISTRES_ROUTES),
       },
+      {
+        path: 'alertes',
+        loadChildren: () =>
+          import('./features/alertes/alertes.routes').then((m) => m.ALERTES_ROUTES),
+      },
+      {
+        path: 'seuils-alerte',
+        title: "Seuils d'alerte",
+        loadComponent: () =>
+          import('./features/alertes/seuils-alerte.component').then((m) => m.SeuilsAlerteComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
