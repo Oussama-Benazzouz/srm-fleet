@@ -59,6 +59,24 @@ export interface RechercheVehicule {
   statut?: StatutVehicule | '';
 }
 
+/**
+ * Catégories de véhicule proposées à la saisie (source unique pour le formulaire
+ * et le filtre de recherche). Le backend stocke `type_vehicule` en texte libre :
+ * cette liste peut évoluer sans migration (exigence d'évolutivité du cahier des charges).
+ */
+export const TYPES_VEHICULE = [
+  'AGENCE MOBILE',
+  'CAMION',
+  'CAMIONNETTE',
+  'CYCLOMOTEUR',
+  'ENGIN',
+  'FOURGONNETTE',
+  'PICK-UP',
+  'VÉHICULES (SUV,CI)',
+  'CONDUITE INTÉRIEURE',
+  'FOURGON',
+] as const;
+
 export const STATUT_LABELS: Record<StatutVehicule, string> = {
   DISPONIBLE: 'Disponible',
   AFFECTE: 'Affecté',
