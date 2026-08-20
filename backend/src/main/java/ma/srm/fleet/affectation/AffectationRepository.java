@@ -29,4 +29,9 @@ public interface AffectationRepository
         + "and a.dateDebut <= :date and (a.dateFin is null or a.dateFin >= :date) "
         + "order by a.dateDebut desc")
     List<Affectation> findCouvrantDate(@Param("vehiculeId") Long vehiculeId, @Param("date") LocalDate date);
+
+    /** Tableau de bord : nombre d'affectations actives (scope province ; prov null = national). */
+    @Query("select count(a) from Affectation a where a.statut = ma.srm.fleet.affectation.StatutAffectation.ACTIVE "
+        + "and (:prov is null or a.vehicule.province.id = :prov)")
+    long compterActives(@Param("prov") Long prov);
 }
