@@ -68,6 +68,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/conformite/conformite.routes').then((m) => m.VISITES_ROUTES),
       },
+      {
+        path: 'sinistres',
+        loadChildren: () =>
+          import('./features/conformite/conformite.routes').then((m) => m.SINISTRES_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

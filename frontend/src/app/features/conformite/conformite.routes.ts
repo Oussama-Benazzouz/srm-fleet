@@ -27,3 +27,22 @@ export const VISITES_ROUTES: Routes = [
     loadComponent: () => import('./visite-form.component').then((m) => m.VisiteFormComponent),
   },
 ];
+
+export const SINISTRES_ROUTES: Routes = [
+  {
+    path: '',
+    title: 'Sinistres',
+    loadComponent: () => import('./sinistre-list.component').then((m) => m.SinistreListComponent),
+  },
+  {
+    path: 'nouveau',
+    title: 'Nouveau sinistre',
+    loadComponent: () => import('./sinistre-form.component').then((m) => m.SinistreFormComponent),
+  },
+  {
+    path: ':id',
+    title: 'Sinistre',
+    loadComponent: () =>
+      import('./sinistre-detail.component').then((m) => m.SinistreDetailComponent),
+  },
+];
