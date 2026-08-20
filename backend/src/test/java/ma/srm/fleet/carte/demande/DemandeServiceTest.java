@@ -82,6 +82,16 @@ class DemandeServiceTest {
     }
 
     @Test
+    void creer_affectationADejaCarteActive_leve409() {
+        when(affectationRepository.findById(1L)).thenReturn(Optional.of(affectation(1L, 1L)));
+        when(carteRepository.existsByAffectationIdAndStatut(1L, StatutCarte.ACTIVE)).thenReturn(true);
+        assertThatThrownBy(() -> service.creer(new DemandeRequest(1L, "Mission"),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null, 7L)))
+            .isInstanceOf(BusinessException.class)
+            .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    @Test
     void valider_dejaTraitee_leve409() {
         when(demandeRepository.findById(1L)).thenReturn(Optional.of(demande(1L, affectation(1L, 1L), StatutDemandeCarte.VALIDEE)));
         assertThatThrownBy(() -> service.valider(1L, new ValiderRequest("C1", new BigDecimal("3000"), 4L),

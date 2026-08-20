@@ -6,7 +6,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { AdministrationService } from '../administration/administration.service';
 import { Departement, Province } from '../administration/utilisateur.models';
 import { FlotteService } from './flotte.service';
-import { Fournisseur, ModeAcquisition, StatutVehicule } from './flotte.models';
+import { Fournisseur, ModeAcquisition, StatutVehicule, TYPES_VEHICULE } from './flotte.models';
 
 @Component({
   selector: 'app-vehicule-form',
@@ -44,12 +44,17 @@ import { Fournisseur, ModeAcquisition, StatutVehicule } from './flotte.models';
           </div>
           <div class="field">
             <label class="field__label" for="type">Type</label>
-            <input
+            <select
               id="type"
-              class="input"
+              class="input select"
               formControlName="typeVehicule"
               [attr.aria-invalid]="isInvalid('typeVehicule')"
-            />
+            >
+              <option value="" disabled>Catégorie</option>
+              @for (t of typesVehicule; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
             @if (isInvalid('typeVehicule')) {
               <p class="field__error">Le type est obligatoire.</p>
             }
@@ -237,6 +242,8 @@ export class VehiculeFormComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  protected readonly typesVehicule = TYPES_VEHICULE;
 
   protected readonly id = signal<number | null>(null);
   protected readonly provinces = signal<Province[]>([]);

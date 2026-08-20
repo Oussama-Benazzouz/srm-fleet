@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { FlotteService } from './flotte.service';
-import { MODE_LABELS, STATUT_LABELS, StatutVehicule, Vehicule } from './flotte.models';
+import { MODE_LABELS, STATUT_LABELS, StatutVehicule, TYPES_VEHICULE, Vehicule } from './flotte.models';
 
 @Component({
   selector: 'app-vehicule-list',
@@ -61,14 +61,18 @@ import { MODE_LABELS, STATUT_LABELS, StatutVehicule, Vehicule } from './flotte.m
             aria-label="Recherche par immatriculation"
           />
         </div>
-        <input
-          class="input toolbar__select"
+        <select
+          class="input select toolbar__select"
           [(ngModel)]="type"
           name="type"
-          placeholder="Type"
-          (keyup.enter)="charger()"
-          aria-label="Filtrer par type"
-        />
+          aria-label="Filtrer par catégorie"
+          (ngModelChange)="charger()"
+        >
+          <option [ngValue]="''">Toutes les catégories</option>
+          @for (t of types; track t) {
+            <option [ngValue]="t">{{ t }}</option>
+          }
+        </select>
         <select
           class="input select toolbar__select"
           [(ngModel)]="statut"
@@ -356,6 +360,7 @@ export class VehiculeListComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly statuts: StatutVehicule[] = ['DISPONIBLE', 'AFFECTE', 'IMMOBILISE', 'SORTI_DU_PARC'];
+  protected readonly types = TYPES_VEHICULE;
 
   protected immatriculation = '';
   protected type = '';
