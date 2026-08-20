@@ -76,6 +76,16 @@ public class DemandeService {
                 throw new BusinessException("Affectation introuvable : " + aff.getId(), HttpStatus.NOT_FOUND);
             }
         }
+
+        // RG4 : refuser la demande en amont si l'affectation porte déjà une carte active,
+        // plutôt que de laisser le central le découvrir à la validation. Vaut pour tout rôle.
+        if (carteRepository.existsByAffectationIdAndStatut(aff.getId(), StatutCarte.ACTIVE)) {
+            throw new BusinessException(
+                "Cette affectation possède déjà une carte carburant active ; "
+                    + "aucune nouvelle demande ne peut être soumise tant qu'elle n'est pas clôturée",
+                HttpStatus.CONFLICT);
+        }
+
         Utilisateur demandeur = utilisateurRepository.findById(principal.getId())
             .orElseThrow(() -> new BusinessException("Utilisateur introuvable", HttpStatus.BAD_REQUEST));
 
