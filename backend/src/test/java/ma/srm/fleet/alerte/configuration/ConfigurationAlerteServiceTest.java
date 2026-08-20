@@ -40,9 +40,9 @@ class ConfigurationAlerteServiceTest {
     }
 
     @Test
-    void modifierSeuil_typeInconnu_leve404() {
-        when(repository.findById(TypeSourceAlerte.PLAFOND_CARTE)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.modifierSeuil(TypeSourceAlerte.PLAFOND_CARTE, 10))
+    void modifierSeuil_configAbsente_leve404() {
+        when(repository.findById(TypeSourceAlerte.VISITE_TECHNIQUE)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.modifierSeuil(TypeSourceAlerte.VISITE_TECHNIQUE, 10))
             .isInstanceOf(BusinessException.class)
             .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
