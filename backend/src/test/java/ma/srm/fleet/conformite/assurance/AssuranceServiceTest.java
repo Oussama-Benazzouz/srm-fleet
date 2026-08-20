@@ -1,0 +1,80 @@
+package ma.srm.fleet.conformite.assurance;
+
+import java.time.LocalDate;
+import java.util.Optional;
+import ma.srm.fleet.admin.utilisateur.RoleUtilisateur;
+import ma.srm.fleet.common.exception.BusinessException;
+import ma.srm.fleet.conformite.assurance.dto.AssuranceRequest;
+import ma.srm.fleet.conformite.assurance.dto.AssuranceResponse;
+import ma.srm.fleet.referentiel.province.Province;
+import ma.srm.fleet.referentiel.vehicule.Vehicule;
+import ma.srm.fleet.referentiel.vehicule.VehiculeRepository;
+import ma.srm.fleet.security.UserPrincipal;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class AssuranceServiceTest {
+
+    @Mock AssuranceRepository assuranceRepository;
+    @Mock VehiculeRepository vehiculeRepository;
+    @InjectMocks AssuranceService service;
+
+    private UserPrincipal principal(RoleUtilisateur role, Long provinceId) {
+        UserPrincipal p = mock(UserPrincipal.class);
+        lenient().when(p.getRole()).thenReturn(role);
+        lenient().when(p.getProvinceId()).thenReturn(provinceId);
+        return p;
+    }
+
+    private Vehicule vehicule(Long provinceId) {
+        Province p = new Province(); p.setId(provinceId); p.setLibelle("P" + provinceId);
+        Vehicule v = new Vehicule(); v.setId(9L); v.setImmatriculation("X-9"); v.setProvince(p);
+        return v;
+    }
+
+    @Test
+    void creer_provincialHorsProvince_leve404() {
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));   // province 1
+        assertThatThrownBy(() -> service.creer(
+            new AssuranceRequest(9L, "AXA", LocalDate.parse("2026-01-01"), LocalDate.parse("2027-01-01")),
+            principal(RoleUtilisateur.RESPONSABLE_PROVINCIAL, 2L)))                    // provincial de 2
+            .isInstanceOf(BusinessException.class)
+            .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void creer_echeanceAvantDebut_leve400() {
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));
+        assertThatThrownBy(() -> service.creer(
+            new AssuranceRequest(9L, "AXA", LocalDate.parse("2027-01-01"), LocalDate.parse("2026-01-01")),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null)))
+            .isInstanceOf(BusinessException.class)
+            .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void creer_ok() {
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));
+        when(assuranceRepository.save(any(Assurance.class))).thenAnswer(i -> i.getArgument(0));
+
+        AssuranceResponse res = service.creer(
+            new AssuranceRequest(9L, "AXA", LocalDate.parse("2026-01-01"), LocalDate.parse("2027-01-01")),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null));
+
+        assertThat(res.nomCompagnie()).isEqualTo("AXA");
+        assertThat(res.vehiculeId()).isEqualTo(9L);
+        assertThat(res.provinceId()).isEqualTo(1L);
+    }
+}
