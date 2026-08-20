@@ -32,6 +32,9 @@
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       APP_JWT_SECRET: ${JWT_SECRET}
       APP_JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      APP_STORAGE_DOCUMENTS: /app/data/documents
+    volumes:
+      - documents-data:/app/data/documents
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:
@@ -62,3 +65,4 @@ networks:
 
 volumes:
   db-data:
+  documents-data:

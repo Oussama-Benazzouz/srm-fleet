@@ -12,6 +12,9 @@ app:
   jwt:
     secret: ${APP_JWT_SECRET}
     expiration-ms: ${APP_JWT_EXPIRATION_MS}
+  storage:
+    # Répertoire racine des pièces jointes de sinistres (monté sur un volume Docker en conteneur).
+    documents: ${APP_STORAGE_DOCUMENTS:./data/documents}
 
 management:
   endpoints:
