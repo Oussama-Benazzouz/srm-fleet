@@ -22,7 +22,9 @@ interface NavItem {
     | 'card'
     | 'shield'
     | 'inspect'
-    | 'alert';
+    | 'alert'
+    | 'bell'
+    | 'sliders';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
@@ -56,6 +58,13 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Assurances', route: '/assurances', icon: 'shield' },
   { label: 'Visites techniques', route: '/visites-techniques', icon: 'inspect' },
   { label: 'Sinistres', route: '/sinistres', icon: 'alert' },
+  { label: 'Alertes', route: '/alertes', icon: 'bell' },
+  {
+    label: "Seuils d'alerte",
+    route: '/seuils-alerte',
+    icon: 'sliders',
+    roles: ['ADMINISTRATEUR_CENTRAL'],
+  },
 ];
 
 @Component({
@@ -235,6 +244,26 @@ const NAV_ITEMS: readonly NavItem[] = [
                   @case ('alert') {
                     <path
                       d="M10 3.5 2.5 16.5h15L10 3.5Zm0 5v4m0 2.5h.01"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('bell') {
+                    <path
+                      d="M10 3.5a4.5 4.5 0 0 0-4.5 4.5c0 3.5-1.5 4.5-1.5 5.5h12c0-1-1.5-2-1.5-5.5A4.5 4.5 0 0 0 10 3.5ZM8.5 16a1.5 1.5 0 0 0 3 0"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('sliders') {
+                    <path
+                      d="M4 6.5h7m3 0h2M4 13.5h2m3 0h7M11 4.5v4M6 11.5v4"
                       fill="none"
                       stroke="currentColor"
                       stroke-width="1.4"
