@@ -9,3 +9,8 @@ spring:
     password: change-me
   flyway:
     out-of-order: true
+
+app:
+  admin:
+    # Développement uniquement : mot de passe initial du compte 'admin'.
+    initial-password: Admin@123

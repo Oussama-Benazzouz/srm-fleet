@@ -23,6 +23,10 @@ app:
   alertes:
     # Moteur d'alertes : exécution quotidienne à 06:00 (surcharge possible par environnement).
     cron: ${APP_ALERTES_CRON:0 0 6 * * *}
+  admin:
+    # Mot de passe initial du compte 'admin', posé au 1er démarrage. Obligatoire en production
+    # (variable APP_ADMIN_INITIAL_PASSWORD) : aucun mot de passe par défaut n'est appliqué sinon.
+    initial-password: ${APP_ADMIN_INITIAL_PASSWORD:}
 
 management:
   endpoints:
