@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ExportButtonComponent } from '../exports/export-button.component';
 import { ConformiteService } from './conformite.service';
 import { OptionVehicule, Visite } from './conformite.models';
 
 @Component({
   selector: 'app-visite-list',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, ExportButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page">
@@ -22,18 +23,21 @@ import { OptionVehicule, Visite } from './conformite.models';
             Contrôles techniques par véhicule, avec compagnie et conducteur accompagnateur (RF-19).
           </p>
         </div>
-        <a routerLink="nouvelle" class="btn btn--primary">
-          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-            <path
-              d="M10 4.5v11M4.5 10h11"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-              stroke-linecap="round"
-            />
-          </svg>
-          Nouvelle visite
-        </a>
+        <div class="head-actions" style="display:flex;gap:var(--s-2);align-items:center">
+          <app-export-button resource="visites-techniques" [params]="{ vehiculeId }" />
+          <a routerLink="nouvelle" class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+              <path
+                d="M10 4.5v11M4.5 10h11"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
+            </svg>
+            Nouvelle visite
+          </a>
+        </div>
       </header>
 
       @if (error()) {
