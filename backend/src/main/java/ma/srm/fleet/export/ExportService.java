@@ -8,6 +8,10 @@ import ma.srm.fleet.affectation.StatutAffectation;
 import ma.srm.fleet.affectation.dto.AffectationFilter;
 import ma.srm.fleet.carte.cartecarburant.CarteService;
 import ma.srm.fleet.carte.cartecarburant.StatutCarte;
+import ma.srm.fleet.conformite.assurance.AssuranceService;
+import ma.srm.fleet.conformite.sinistre.SinistreService;
+import ma.srm.fleet.conformite.sinistre.StatutSinistre;
+import ma.srm.fleet.conformite.visitetechnique.VisiteTechniqueService;
 import ma.srm.fleet.referentiel.vehicule.StatutVehicule;
 import ma.srm.fleet.referentiel.vehicule.VehiculeService;
 import ma.srm.fleet.security.UserPrincipal;
@@ -24,13 +28,22 @@ public class ExportService {
     private final VehiculeService vehiculeService;
     private final AffectationService affectationService;
     private final CarteService carteService;
+    private final SinistreService sinistreService;
+    private final AssuranceService assuranceService;
+    private final VisiteTechniqueService visiteService;
 
     public ExportService(VehiculeService vehiculeService,
                          AffectationService affectationService,
-                         CarteService carteService) {
+                         CarteService carteService,
+                         SinistreService sinistreService,
+                         AssuranceService assuranceService,
+                         VisiteTechniqueService visiteService) {
         this.vehiculeService = vehiculeService;
         this.affectationService = affectationService;
         this.carteService = carteService;
+        this.sinistreService = sinistreService;
+        this.assuranceService = assuranceService;
+        this.visiteService = visiteService;
     }
 
     public ExportFichier vehicules(UserPrincipal user, ExportFormat format,
@@ -69,6 +82,40 @@ public class ExportService {
             .toList();
         return construire(format, "cartes-carburant", "Cartes carburant",
             List.of("N° carte", "Véhicule", "Province", "Statut", "Plafond", "Fournisseur", "Créée le"),
+            lignes);
+    }
+
+    public ExportFichier sinistres(UserPrincipal user, ExportFormat format,
+                                   StatutSinistre statut, Long vehiculeId) {
+        List<List<String>> lignes = sinistreService.lister(statut, vehiculeId, user).stream()
+            .map(s -> List.of(
+                val(s.immatriculation()), val(s.dateSinistre()), val(s.statut()),
+                val(s.conducteurNomComplet()), val(s.provinceLibelle()), val(s.description())))
+            .toList();
+        return construire(format, "sinistres", "Sinistres",
+            List.of("Véhicule", "Date", "Statut", "Conducteur responsable", "Province", "Description"),
+            lignes);
+    }
+
+    public ExportFichier assurances(UserPrincipal user, ExportFormat format, Long vehiculeId) {
+        List<List<String>> lignes = assuranceService.lister(vehiculeId, user).stream()
+            .map(a -> List.of(
+                val(a.immatriculation()), val(a.nomCompagnie()), val(a.dateDebut()),
+                val(a.dateEcheance()), val(a.provinceLibelle())))
+            .toList();
+        return construire(format, "assurances", "Assurances",
+            List.of("Véhicule", "Compagnie", "Début", "Échéance", "Province"),
+            lignes);
+    }
+
+    public ExportFichier visites(UserPrincipal user, ExportFormat format, Long vehiculeId) {
+        List<List<String>> lignes = visiteService.lister(vehiculeId, user).stream()
+            .map(v -> List.of(
+                val(v.immatriculation()), val(v.nomCompagnie()), val(v.dateVisite()), val(v.dateEcheance()),
+                val(v.conducteurNomComplet()), val(v.matriculeConducteur()), val(v.provinceLibelle())))
+            .toList();
+        return construire(format, "visites-techniques", "Visites techniques",
+            List.of("Véhicule", "Compagnie", "Date visite", "Échéance", "Conducteur", "Matricule", "Province"),
             lignes);
     }
 
