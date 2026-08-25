@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportButtonComponent } from '../exports/export-button.component';
 import { CarburantService } from './carburant.service';
 import { Carte, STATUT_CARTE_LABELS, StatutCarte } from './carburant.models';
 
 @Component({
   selector: 'app-carte-list',
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, ExportButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page">
@@ -23,6 +24,7 @@ import { Carte, STATUT_CARTE_LABELS, StatutCarte } from './carburant.models';
             Cartes émises (plafond fixé à la validation). Historique conservé par la clôture.
           </p>
         </div>
+        <app-export-button resource="cartes" [params]="{ statut }" />
       </header>
 
       @if (error()) {

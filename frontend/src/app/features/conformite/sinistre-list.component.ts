@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ExportButtonComponent } from '../exports/export-button.component';
 import { ConformiteService } from './conformite.service';
 import { OptionVehicule, Sinistre, STATUT_SINISTRE_LABELS, StatutSinistre } from './conformite.models';
 
 @Component({
   selector: 'app-sinistre-list',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, ExportButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page">
@@ -22,18 +23,21 @@ import { OptionVehicule, Sinistre, STATUT_SINISTRE_LABELS, StatutSinistre } from
             Déclarations rattachées au véhicule et à l'affectation active à la date des faits (RF-23).
           </p>
         </div>
-        <a routerLink="nouveau" class="btn btn--primary">
-          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-            <path
-              d="M10 4.5v11M4.5 10h11"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-              stroke-linecap="round"
-            />
-          </svg>
-          Déclarer un sinistre
-        </a>
+        <div class="head-actions" style="display:flex;gap:var(--s-2);align-items:center">
+          <app-export-button resource="sinistres" [params]="{ statut, vehiculeId }" />
+          <a routerLink="nouveau" class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+              <path
+                d="M10 4.5v11M4.5 10h11"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
+            </svg>
+            Déclarer un sinistre
+          </a>
+        </div>
       </header>
 
       @if (error()) {
