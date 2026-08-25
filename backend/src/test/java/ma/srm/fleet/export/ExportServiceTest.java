@@ -5,6 +5,11 @@ import java.time.LocalDate;
 import java.util.List;
 import ma.srm.fleet.affectation.AffectationService;
 import ma.srm.fleet.carte.cartecarburant.CarteService;
+import ma.srm.fleet.conformite.assurance.AssuranceService;
+import ma.srm.fleet.conformite.sinistre.SinistreService;
+import ma.srm.fleet.conformite.sinistre.StatutSinistre;
+import ma.srm.fleet.conformite.sinistre.dto.SinistreResponse;
+import ma.srm.fleet.conformite.visitetechnique.VisiteTechniqueService;
 import ma.srm.fleet.referentiel.vehicule.ModeAcquisition;
 import ma.srm.fleet.referentiel.vehicule.StatutVehicule;
 import ma.srm.fleet.referentiel.vehicule.VehiculeService;
@@ -27,6 +32,9 @@ class ExportServiceTest {
     @Mock VehiculeService vehiculeService;
     @Mock AffectationService affectationService;
     @Mock CarteService carteService;
+    @Mock SinistreService sinistreService;
+    @Mock AssuranceService assuranceService;
+    @Mock VisiteTechniqueService visiteService;
     @InjectMocks ExportService service;
 
     private final UserPrincipal user = mock(UserPrincipal.class);
@@ -58,5 +66,18 @@ class ExportServiceTest {
         assertThat(f.contentType()).isEqualTo("application/pdf");
         assertThat(f.nomFichier()).endsWith(".pdf");
         assertThat(new String(f.contenu(), 0, 5, StandardCharsets.ISO_8859_1)).startsWith("%PDF-");
+    }
+
+    @Test
+    void sinistres_csv_contient_donnees() {
+        SinistreResponse s = new SinistreResponse(1L, 9L, "1234-A-6", 1L, "Agadir",
+            LocalDate.parse("2026-03-01"), "Choc arrière", StatutSinistre.OUVERT, 3L, 5L, "Sara Alaoui");
+        when(sinistreService.lister(any(), any(), any())).thenReturn(List.of(s));
+
+        ExportFichier f = service.sinistres(user, ExportFormat.CSV, null, null);
+
+        assertThat(f.nomFichier()).startsWith("sinistres-").endsWith(".csv");
+        String contenu = new String(f.contenu(), StandardCharsets.UTF_8);
+        assertThat(contenu).contains("Conducteur responsable").contains("1234-A-6").contains("Sara Alaoui");
     }
 }

@@ -2,6 +2,7 @@ package ma.srm.fleet.export;
 
 import ma.srm.fleet.affectation.StatutAffectation;
 import ma.srm.fleet.carte.cartecarburant.StatutCarte;
+import ma.srm.fleet.conformite.sinistre.StatutSinistre;
 import ma.srm.fleet.referentiel.vehicule.StatutVehicule;
 import ma.srm.fleet.security.UserPrincipal;
 import org.springframework.http.HttpHeaders;
@@ -49,6 +50,28 @@ public class ExportController {
                                          @RequestParam(required = false) StatutCarte statut,
                                          @RequestParam(required = false) Long affectationId) {
         return reponse(service.cartes(user, format, statut, affectationId));
+    }
+
+    @GetMapping("/sinistres")
+    public ResponseEntity<byte[]> sinistres(@AuthenticationPrincipal UserPrincipal user,
+                                            @RequestParam(defaultValue = "CSV") ExportFormat format,
+                                            @RequestParam(required = false) StatutSinistre statut,
+                                            @RequestParam(required = false) Long vehiculeId) {
+        return reponse(service.sinistres(user, format, statut, vehiculeId));
+    }
+
+    @GetMapping("/assurances")
+    public ResponseEntity<byte[]> assurances(@AuthenticationPrincipal UserPrincipal user,
+                                             @RequestParam(defaultValue = "CSV") ExportFormat format,
+                                             @RequestParam(required = false) Long vehiculeId) {
+        return reponse(service.assurances(user, format, vehiculeId));
+    }
+
+    @GetMapping("/visites-techniques")
+    public ResponseEntity<byte[]> visites(@AuthenticationPrincipal UserPrincipal user,
+                                          @RequestParam(defaultValue = "CSV") ExportFormat format,
+                                          @RequestParam(required = false) Long vehiculeId) {
+        return reponse(service.visites(user, format, vehiculeId));
     }
 
     private ResponseEntity<byte[]> reponse(ExportFichier fichier) {
