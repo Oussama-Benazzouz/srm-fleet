@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportButtonComponent } from '../exports/export-button.component';
 import { FlotteService } from './flotte.service';
-import { MODE_LABELS, STATUT_LABELS, StatutVehicule, Vehicule } from './flotte.models';
+import { MODE_LABELS, STATUT_LABELS, StatutVehicule, TYPES_VEHICULE, Vehicule } from './flotte.models';
 
 @Component({
   selector: 'app-vehicule-list',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, ExportButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page">
@@ -21,20 +22,23 @@ import { MODE_LABELS, STATUT_LABELS, StatutVehicule, Vehicule } from './flotte.m
           </div>
           <p class="text-muted text-sm">Parc de la flotte, rattachement et contrats de location.</p>
         </div>
-        @if (isAdmin()) {
-          <a routerLink="nouveau" class="btn btn--primary">
-            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-              <path
-                d="M10 4.5v11M4.5 10h11"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-              />
-            </svg>
-            Nouveau véhicule
-          </a>
-        }
+        <div class="head-actions" style="display:flex;gap:var(--s-2);align-items:center">
+          <app-export-button resource="vehicules" [params]="{ immatriculation, type, statut }" />
+          @if (isAdmin()) {
+            <a routerLink="nouveau" class="btn btn--primary">
+              <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M10 4.5v11M4.5 10h11"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+              Nouveau véhicule
+            </a>
+          }
+        </div>
       </header>
 
       @if (error()) {
@@ -61,14 +65,18 @@ import { MODE_LABELS, STATUT_LABELS, StatutVehicule, Vehicule } from './flotte.m
             aria-label="Recherche par immatriculation"
           />
         </div>
-        <input
-          class="input toolbar__select"
+        <select
+          class="input select toolbar__select"
           [(ngModel)]="type"
           name="type"
-          placeholder="Type"
-          (keyup.enter)="charger()"
-          aria-label="Filtrer par type"
-        />
+          aria-label="Filtrer par catégorie"
+          (ngModelChange)="charger()"
+        >
+          <option [ngValue]="''">Toutes les catégories</option>
+          @for (t of types; track t) {
+            <option [ngValue]="t">{{ t }}</option>
+          }
+        </select>
         <select
           class="input select toolbar__select"
           [(ngModel)]="statut"
@@ -356,6 +364,7 @@ export class VehiculeListComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly statuts: StatutVehicule[] = ['DISPONIBLE', 'AFFECTE', 'IMMOBILISE', 'SORTI_DU_PARC'];
+  protected readonly types = TYPES_VEHICULE;
 
   protected immatriculation = '';
   protected type = '';

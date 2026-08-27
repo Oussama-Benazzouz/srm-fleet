@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ExportButtonComponent } from '../exports/export-button.component';
 import { AffectationService } from './affectation.service';
 import { Affectation } from './affectation.models';
 
 @Component({
   selector: 'app-affectation-list',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, ExportButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page">
@@ -20,12 +21,15 @@ import { Affectation } from './affectation.models';
           </div>
           <p class="text-muted text-sm">Véhicules affectés à des conducteurs.</p>
         </div>
-        <a routerLink="nouvelle" class="btn btn--primary">
-          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-          </svg>
-          Nouvelle affectation
-        </a>
+        <div class="head-actions" style="display:flex;gap:var(--s-2);align-items:center">
+          <app-export-button resource="affectations" [params]="{ statut }" />
+          <a routerLink="nouvelle" class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            Nouvelle affectation
+          </a>
+        </div>
       </header>
 
       @if (error()) { <div class="alert alert--danger" role="alert">{{ error() }}</div> }

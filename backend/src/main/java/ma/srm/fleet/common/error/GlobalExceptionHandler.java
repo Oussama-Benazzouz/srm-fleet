@@ -10,6 +10,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 
 /**
@@ -63,6 +64,24 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
             "Un ou plusieurs champs sont invalides");
         problemDetail.setTitle("Erreur de validation");
+        return problemDetail;
+    }
+
+    /**
+     * Traite le dépassement de la taille maximale d'un téléversement (pièce jointe de sinistre).
+     *
+     * <p>Sans ce gestionnaire, un fichier trop volumineux échoue avec une erreur interne 500
+     * opaque. On renvoie ici un 413 explicite indiquant la limite, exploitable côté client.</p>
+     *
+     * @param ex exception levée lorsque le fichier dépasse la taille autorisée
+     * @return une réponse d'erreur standardisée signalant un fichier trop volumineux
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ProblemDetail handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        log.warn("Téléversement refusé (trop volumineux): {}", ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.PAYLOAD_TOO_LARGE,
+            "Le fichier dépasse la taille maximale autorisée (10 Mo).");
+        problemDetail.setTitle("Fichier trop volumineux");
         return problemDetail;
     }
 

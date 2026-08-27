@@ -7,11 +7,26 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      # Pièces jointes de sinistres : le défaut de 1 Mo est trop bas pour une photo ou un PDF.
+      max-file-size: 10MB
+      max-request-size: 12MB
 
 app:
   jwt:
     secret: ${APP_JWT_SECRET}
     expiration-ms: ${APP_JWT_EXPIRATION_MS}
+  storage:
+    # Répertoire racine des pièces jointes de sinistres (monté sur un volume Docker en conteneur).
+    documents: ${APP_STORAGE_DOCUMENTS:./data/documents}
+  alertes:
+    # Moteur d'alertes : exécution quotidienne à 06:00 (surcharge possible par environnement).
+    cron: ${APP_ALERTES_CRON:0 0 6 * * *}
+  admin:
+    # Mot de passe initial du compte 'admin', posé au 1er démarrage. Obligatoire en production
+    # (variable APP_ADMIN_INITIAL_PASSWORD) : aucun mot de passe par défaut n'est appliqué sinon.
+    initial-password: ${APP_ADMIN_INITIAL_PASSWORD:}
 
 management:
   endpoints:

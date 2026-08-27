@@ -9,7 +9,22 @@ import { Role, ROLE_LABELS } from '../core/models/auth.models';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'users' | 'map' | 'building' | 'drivers' | 'fleet' | 'suppliers' | 'link'; 
+  icon:
+    | 'dashboard'
+    | 'users'
+    | 'map'
+    | 'building'
+    | 'drivers'
+    | 'fleet'
+    | 'suppliers'
+    | 'link'
+    | 'fuel'
+    | 'card'
+    | 'shield'
+    | 'inspect'
+    | 'alert'
+    | 'bell'
+    | 'sliders';
   /** Restreint l'entrée à ces rôles ; visible par tous si omis. */
   roles?: Role[];
 }
@@ -38,6 +53,18 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Conducteurs', route: '/conducteurs', icon: 'drivers' },
   { label: 'Véhicules', route: '/vehicules', icon: 'fleet' },
   { label: 'Fournisseurs', route: '/fournisseurs', icon: 'suppliers' },
+  { label: 'Demandes carburant', route: '/demandes', icon: 'fuel' },
+  { label: 'Cartes carburant', route: '/cartes', icon: 'card' },
+  { label: 'Assurances', route: '/assurances', icon: 'shield' },
+  { label: 'Visites techniques', route: '/visites-techniques', icon: 'inspect' },
+  { label: 'Sinistres', route: '/sinistres', icon: 'alert' },
+  { label: 'Alertes', route: '/alertes', icon: 'bell' },
+  {
+    label: "Seuils d'alerte",
+    route: '/seuils-alerte',
+    icon: 'sliders',
+    roles: ['ADMINISTRATEUR_CENTRAL'],
+  },
 ];
 
 @Component({
@@ -108,8 +135,15 @@ const NAV_ITEMS: readonly NavItem[] = [
                     />
                   }
                   @case ('drivers') {
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
                       <circle cx="10" cy="6.5" r="3" />
                       <path d="M4.5 16.5c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" />
                     </svg>
@@ -123,8 +157,22 @@ const NAV_ITEMS: readonly NavItem[] = [
                       stroke-linecap="round"
                       stroke-linejoin="round"
                     />
-                    <circle cx="5.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
-                    <circle cx="13.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+                    <circle
+                      cx="5.5"
+                      cy="14.5"
+                      r="1.4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                    />
+                    <circle
+                      cx="13.5"
+                      cy="14.5"
+                      r="1.4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                    />
                   }
                   @case ('suppliers') {
                     <path
@@ -136,16 +184,93 @@ const NAV_ITEMS: readonly NavItem[] = [
                       stroke-linejoin="round"
                     />
                   }
-                   @case ('link') {
+                  @case ('link') {
                     <path
-                     d="M8 12a3 3 0 0 0 4 0l2-2a3 3 0 0 0-4-4l-1 1"
-                    fill="none" stroke="currentColor" stroke-width="1.4"
-                    stroke-linecap="round" stroke-linejoin="round" />
+                      d="M8 12a3 3 0 0 0 4 0l2-2a3 3 0 0 0-4-4l-1 1"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
                     <path
-                    d="M12 8a3 3 0 0 0-4 0l-2 2a3 3 0 0 0 4 4l1-1"
-                    fill="none" stroke="currentColor" stroke-width="1.4"
-                    stroke-linecap="round" stroke-linejoin="round" />
-      }
+                      d="M12 8a3 3 0 0 0-4 0l-2 2a3 3 0 0 0 4 4l1-1"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('fuel') {
+                    <path
+                      d="M5 4.5h6v11H5v-11Zm6 3h2l1.5 1.5v5a1.2 1.2 0 0 1-2.4 0V11H11M5 8h6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('card') {
+                    <path
+                      d="M3 6.5h14v7H3v-7Zm0 2.5h14M6 12h3"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('shield') {
+                    <path
+                      d="M10 3l6 2v4c0 4-2.7 6.3-6 7.5C6.7 15.3 4 13 4 9V5l6-2Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('inspect') {
+                    <path
+                      d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm-3-7 2 2 4-4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('alert') {
+                    <path
+                      d="M10 3.5 2.5 16.5h15L10 3.5Zm0 5v4m0 2.5h.01"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('bell') {
+                    <path
+                      d="M10 3.5a4.5 4.5 0 0 0-4.5 4.5c0 3.5-1.5 4.5-1.5 5.5h12c0-1-1.5-2-1.5-5.5A4.5 4.5 0 0 0 10 3.5ZM8.5 16a1.5 1.5 0 0 0 3 0"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
+                  @case ('sliders') {
+                    <path
+                      d="M4 6.5h7m3 0h2M4 13.5h2m3 0h7M11 4.5v4M6 11.5v4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  }
                 }
               </svg>
               <span>{{ item.label }}</span>

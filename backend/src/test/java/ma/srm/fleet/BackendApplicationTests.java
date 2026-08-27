@@ -1,12 +1,9 @@
 package ma.srm.fleet;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
-@ActiveProfiles("test")
-class BackendApplicationTests {
+/** Démarrage du contexte complet sur un PostgreSQL réel (Testcontainers, cf. base). */
+class BackendApplicationTests extends AbstractPostgresIntegrationTest {
 
 	@Test
 	void contextLoads() {
