@@ -98,7 +98,6 @@ import { ROLE_LABELS } from '../../../core/models/auth.models';
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1100px;
       }
 
       .page__head {

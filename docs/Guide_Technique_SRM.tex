@@ -1,0 +1,407 @@
+\documentclass[11pt]{article}
+\usepackage{srmstyle}
+\setsrmdoctitle{Guide technique}
+
+\begin{document}
+
+\srmtitlepage{Guide technique}{Manuel du developpeur SRM Fleet}{Comprendre, faire evoluer et maintenir l'application}
+
+\tableofcontents
+\vspace{0.6cm}
+\srmrule
+\vspace{0.4cm}
+
+% =====================================================================
+\section{Introduction}
+\textbf{SRM Fleet} est le backoffice web de gestion du parc automobile de SRM Souss-Massa. Il couvre
+le referentiel des vehicules et des conducteurs, le cycle de vie des affectations, les cartes
+carburant, la conformite reglementaire (assurance, visite technique, sinistres), un moteur d'alertes,
+un tableau de bord et des exports CSV et PDF.
+
+Ce guide s'adresse a toute personne qui reprendra le code. Il explique l'architecture, le
+fonctionnement d'un module de bout en bout, les briques communes a tous les modules, puis la facon
+d'ajouter un module en respectant les conventions du projet. Il reste volontairement synthetique :
+un seul module est detaille, les autres suivent le meme schema.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\bfseries}l Y}
+\toprule
+\rowcolor{srmsoft} Couche & Technologie \\
+\midrule
+Frontend & Angular 21 (composants standalone, signaux), design system maison, servi par Nginx. \\
+Backend  & Spring Boot 3.5 sur Java 21, Spring Security (JWT), Spring Data JPA. \\
+Base de donnees & PostgreSQL 17, migrations Flyway. \\
+Generation PDF & OpenPDF. \\
+Orchestration & Docker Compose. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+\section{Vue d'ensemble de l'architecture}
+L'application suit une architecture classique en trois tiers, sans etat cote serveur.
+
+\begin{srmnote}
+\textbf{Navigateur} (Angular) \;$\rightarrow$\; \textbf{Nginx} sert l'application et relaie \texttt{/api/}
+\;$\rightarrow$\; \textbf{API REST Spring Boot} \;$\rightarrow$\; \textbf{PostgreSQL}.\\
+L'authentification repose sur un jeton \textbf{JWT} envoye dans l'en-tete \texttt{Authorization}. Le
+backend est \textbf{stateless} : aucune session serveur, chaque requete porte son jeton.
+\end{srmnote}
+
+\subsection{Deux roles, un cloisonnement}
+\begin{itemize}
+  \item \textbf{Administrateur central} : visibilite nationale, gere le referentiel et valide les demandes de carte.
+  \item \textbf{Responsable provincial} : acces limite a sa province, sans visibilite sur les autres.
+\end{itemize}
+Ce cloisonnement (regle \textbf{RG14}) est applique dans la couche service du backend. Il est present
+dans presque tous les modules : c'est un reflexe a garder en tete pour toute nouvelle fonctionnalite.
+
+% =====================================================================
+\section{Le backend}
+
+\subsection{Une organisation par module}
+Le code est range \textbf{par domaine metier}, pas par type technique. Chaque module contient sa propre
+pile de classes, ce qui rend chaque fonctionnalite autonome et facile a retrouver. Exemple pour le
+module Vehicule :
+\begin{lstlisting}
+ma/srm/fleet/referentiel/vehicule/
+  VehiculeController.java       # exposition REST (couche mince)
+  VehiculeService.java          # regles metier + transactions
+  VehiculeRepository.java       # acces base (Spring Data JPA)
+  VehiculeSpecifications.java   # filtres de recherche dynamiques
+  Vehicule.java                 # entite JPA (table)
+  StatutVehicule.java           # enumerations du domaine
+  dto/VehiculeRequest.java      # donnees entrantes (validees)
+  dto/VehiculeResponse.java     # donnees sortantes (jamais l'entite)
+\end{lstlisting}
+
+\subsection{Le parcours d'une requete}
+Toutes les requetes suivent le meme trajet en couches. On le detaille ici sur la creation d'un
+vehicule ; \textbf{tous les modules fonctionnent ainsi}.
+
+\subsubsection{1. Le controleur : mince, il ne fait que router}
+Il declare la route, controle le role si besoin, et delegue au service. Aucune logique metier ici.
+\begin{lstlisting}[language=Java]
+@PostMapping
+@ResponseStatus(HttpStatus.CREATED)
+@PreAuthorize("hasRole('ADMINISTRATEUR_CENTRAL')")
+public VehiculeResponse creer(@Valid @RequestBody VehiculeRequest req) {
+    return service.creer(req);
+}
+\end{lstlisting}
+Points a retenir : \texttt{@Valid} declenche la validation des champs, \texttt{@PreAuthorize} restreint
+l'acces au role, \texttt{@AuthenticationPrincipal UserPrincipal user} (sur les lectures) fournit
+l'utilisateur connecte pour le cloisonnement.
+
+\subsubsection{2. Le service : les regles metier et la transaction}
+Annote \texttt{@Transactional}, il porte toute la logique : unicite, regles de gestion, resolution des
+references, puis conversion en DTO.
+\begin{lstlisting}[language=Java]
+public VehiculeResponse creer(VehiculeRequest req) {
+    if (vehiculeRepository.existsByImmatriculation(req.immatriculation())) {
+        throw new BusinessException("Cette immatriculation existe deja", HttpStatus.CONFLICT);
+    }
+    Vehicule v = new Vehicule();
+    appliquer(v, req);                       // RG2 : location => fournisseur obligatoire
+    return toResponse(vehiculeRepository.save(v));
+}
+\end{lstlisting}
+
+\subsubsection{3. Repository, entite et DTO}
+Le \textbf{repository} etend \texttt{JpaRepository} : les methodes de base (save, findById, findAll) sont
+fournies ; on ajoute des methodes derivees du nom (\texttt{existsByImmatriculation}). L'\textbf{entite}
+represente la table. Le \textbf{DTO} (un \texttt{record} Java) transporte les donnees : l'entite JPA ne
+quitte jamais le service, le controleur ne parle qu'en DTO.
+
+\begin{srmnote}
+Regle d'or du projet : \textbf{injection par constructeur}, \textbf{aucune logique metier dans les
+controleurs}, \textbf{les entites ne sortent pas de la couche service}. Le mapping entite vers DTO est
+ecrit a la main (methode \texttt{toResponse} ou classe \texttt{...Mapper}), sans librairie.
+\end{srmnote}
+
+\subsection{Les memes couches partout}
+Chaque module reprend ce schema. La liste ci-dessous situe les principaux modules ; leur structure
+interne est identique a celle du module Vehicule.
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\bfseries}l Y}
+\toprule
+\rowcolor{srmsoft} Module & Role \\
+\midrule
+Referentiel & Vehicules, conducteurs et permis, fournisseurs, provinces, departements. \\
+Affectation & Lien vehicule vers conducteur, historique, cloture. \\
+Carte carburant & Demande, validation par le central, emission de la carte. \\
+Conformite & Assurances, visites techniques, sinistres et pieces jointes. \\
+Alerte & Moteur planifie et configuration des seuils. \\
+Dashboard & Agregation des statistiques de tous les modules. \\
+Export & Generation CSV et PDF, reutilisant les filtres des listes. \\
+Admin et Auth & Comptes utilisateurs, connexion et jetons JWT. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{La securite}
+La configuration est centralisee dans \texttt{SecurityConfig}. Choix structurants : \textbf{CSRF
+desactive} (inutile pour une API a jeton), \textbf{sessions STATELESS}, et une \textbf{liste blanche}
+d'endpoints publics (login, healthcheck, documentation Swagger). Tout le reste exige une
+authentification (principe du moindre privilege).
+\begin{itemize}
+  \item \textbf{Connexion} : \texttt{/api/v1/auth/login} verifie les identifiants via
+        l'\texttt{AuthenticationManager}, puis \texttt{JwtService} genere le jeton.
+  \item \textbf{Chaque requete suivante} : le \texttt{JwtAuthenticationFilter} lit le jeton, le valide et
+        peuple le contexte de securite avant les filtres standards de Spring.
+  \item \textbf{Roles} : \texttt{@PreAuthorize("hasRole('ADMINISTRATEUR\_CENTRAL')")} protege les actions
+        reservees au central (creation de referentiel, validation des demandes).
+  \item \textbf{Mots de passe} : haches avec \textbf{BCrypt} (sel integre).
+\end{itemize}
+
+\subsection{Le cloisonnement par province (RG14)}
+Dans les services, un Responsable provincial ne voit que sa province. En \textbf{lecture de liste}, on
+ajoute une specification qui filtre sur \texttt{provinceId}. En \textbf{acces a un element precis}, on
+verifie la portee ; si l'element appartient a une autre province, on renvoie \textbf{404} (et non 403)
+pour ne pas reveler son existence.
+\begin{lstlisting}[language=Java]
+if (user.getRole() == RoleUtilisateur.RESPONSABLE_PROVINCIAL
+        && !v.getProvince().getId().equals(user.getProvinceId())) {
+    throw new BusinessException("Vehicule introuvable : " + v.getId(), HttpStatus.NOT_FOUND);
+}
+\end{lstlisting}
+
+\subsection{Les filtres de recherche (Specifications)}
+Les listes acceptent des filtres optionnels (immatriculation, type, statut, province). On les compose
+avec l'API \texttt{Specification} de Spring Data : chaque critere est une brique, ignoree si le
+parametre est absent. Le cloisonnement province se branche comme une brique de plus.
+
+\subsection{Validation et gestion des erreurs}
+Deux niveaux, une reponse homogene :
+\begin{itemize}
+  \item \textbf{Validation des champs} : annotations Bean Validation sur les DTO (\texttt{@NotBlank},
+        \texttt{@NotNull}...), declenchees par \texttt{@Valid}.
+  \item \textbf{Regles metier} : on leve une \texttt{BusinessException} portant un message et un statut HTTP.
+\end{itemize}
+Le \texttt{GlobalExceptionHandler} (annote \texttt{@RestControllerAdvice}) transforme toute exception en
+reponse \textbf{ProblemDetail} (norme RFC 7807 : un corps JSON standard avec titre, statut, detail). Les
+erreurs inattendues renvoient un 500 generique, sans exposer de detail technique.
+
+\subsection{Les cycles de vie}
+Plusieurs modules portent une petite machine a etats, geree dans le service (transitions verifiees,
+statut stocke en base) :
+\begin{itemize}
+  \item \textbf{Demande de carte} : \texttt{EN\_ATTENTE} puis \texttt{VALIDEE} ou \texttt{REFUSEE}. La
+        validation (par le central) fixe le plafond et le fournisseur, et emet la carte.
+  \item \textbf{Affectation} : \texttt{ACTIVE} puis \texttt{CLOTUREE}. La cloture conserve l'historique.
+  \item \textbf{Sinistre} : \texttt{OUVERT}, \texttt{EN\_COURS}, \texttt{CLOTURE}, avec pieces jointes.
+\end{itemize}
+
+\subsection{Le moteur d'alertes}
+Un service planifie (Spring Scheduler, une fois par jour) parcourt les configurations de seuils. Pour
+chaque type surveille (assurance, visite technique), il retient les echeances qui tombent dans la
+fenetre du seuil et cree une alerte \textbf{si elle n'existe pas deja} (deduplication par type et
+reference). Les notifications sont \textbf{in-app} uniquement (canal tableau de bord) ; le tableau de
+bord des alertes les classe par urgence.
+
+\subsection{Base de donnees et migrations}
+Le schema est gere par \textbf{Flyway} : des fichiers \texttt{V1\_\_...sql} a \texttt{V8\_\_...sql}
+appliques automatiquement au demarrage, dans l'ordre. On ne modifie jamais une migration deja livree :
+on en ajoute une nouvelle.
+\begin{srmwarn}
+Deux regles critiques reposent sur des \textbf{index uniques partiels PostgreSQL}, impossibles a
+reproduire avec une base en memoire : \textbf{RG3} (une seule affectation active par vehicule) et
+\textbf{RG4} (une seule carte active par affectation). C'est la base qui garantit ces regles, en plus du
+controle applicatif. Elles sont verifiees par des tests d'integration Testcontainers.
+\end{srmwarn}
+Le \textbf{seed} initial insere le referentiel de base et le compte \texttt{admin} (dont le mot de passe
+est pose au demarrage par \texttt{AdminPasswordInitializer}, a partir de la configuration : aucun mot de
+passe par defaut, voir le guide de deploiement).
+
+\subsection{Les exports CSV et PDF}
+Chaque liste propose un bouton d'export. Les exports \textbf{reutilisent les services de liste} : memes
+filtres et meme cloisonnement province que l'ecran. Le \textbf{CSV} est genere sans dependance (UTF-8
+avec BOM pour Excel, separateur point-virgule). Le \textbf{PDF} (OpenPDF) est mis en page selon la charte
+graphique : logo, filet tricolore officiel, tableau a en-tete bleu, pied de page.
+
+% =====================================================================
+\section{Le frontend}
+
+\subsection{Organisation}
+L'application Angular est decoupee en trois espaces :
+\begin{itemize}
+  \item \texttt{core/} : services transverses (authentification, theme, composants d'interface communs).
+  \item \texttt{features/} : un dossier par module (vehicules, conducteurs, affectations...), avec ses
+        composants, son service HTTP, ses modeles et ses routes.
+  \item \texttt{layout/} : la coquille de l'application (menu lateral, barre superieure).
+\end{itemize}
+Tous les composants sont \textbf{standalone} (pas de NgModule), l'etat local s'exprime avec des
+\textbf{signaux}, et le typage est strict (pas de \texttt{any}).
+
+\subsection{Le parcours d'un module (cote client)}
+Meme regularite qu'au backend. Pour un module donne :
+\begin{itemize}
+  \item un \textbf{service} expose les appels HTTP vers \texttt{/api/v1/...} et renvoie des \texttt{Observable} ;
+  \item trois \textbf{composants} type : la \textbf{liste} (recherche et filtres), le \textbf{formulaire}
+        (creation et modification), le \textbf{detail} (fiche en lecture) ;
+  \item les \textbf{modeles} (interfaces TypeScript) decrivent les donnees echangees.
+\end{itemize}
+\begin{lstlisting}
+rechercherVehicules(f: RechercheVehicule): Observable<Vehicule[]> {
+  let params = new HttpParams();
+  if (f.immatriculation) params = params.set('immatriculation', f.immatriculation);
+  if (f.statut) params = params.set('statut', f.statut);
+  return this.http.get<Vehicule[]>('/api/v1/vehicules', { params });
+}
+\end{lstlisting}
+
+\subsection{L'authentification cote client}
+Le \texttt{AuthService} est la source de verite de la session. Il conserve le jeton et le profil dans le
+\texttt{localStorage} et expose des signaux (\texttt{isAuthenticated}, \texttt{isAdmin}). Deux mecanismes
+completent le tableau :
+\begin{itemize}
+  \item \textbf{Intercepteurs HTTP} : \texttt{authInterceptor} ajoute l'en-tete \texttt{Authorization} sur
+        les appels \texttt{/api/} ; \texttt{errorInterceptor} traite les erreurs (deconnexion sur 401).
+  \item \textbf{Gardes de routes} : \texttt{authGuard} (routes authentifiees), \texttt{guestGuard} (page de
+        connexion), \texttt{adminGuard} (routes reservees au central).
+\end{itemize}
+La session est restauree de facon synchrone au demarrage, avant toute decision de routage. La validite
+du jeton (champ \texttt{exp}) est verifiee cote client par confort ; la validation qui fait foi reste
+celle du backend.
+
+\subsection{Le design system maison}
+Aucune librairie d'interface externe. Tout part des \textbf{jetons} (couleurs, espacements, rayons,
+typographie) et des \textbf{primitives} CSS definies dans \texttt{frontend/src/styles.scss} :
+\texttt{.card}, \texttt{.btn}, \texttt{.field}, \texttt{.input}, \texttt{.table}, \texttt{.badge}...
+Chaque nouvel ecran se compose a partir de ces primitives, ce qui garantit une coherence visuelle totale
+et un theme clair et sombre gere en un seul endroit. Les graphes du tableau de bord sont dessines en SVG.
+
+% =====================================================================
+\section{Les regles de gestion cles}
+Ces regles structurent le metier. Elles sont appliquees dans les services et, pour les plus critiques,
+garanties par la base.
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\bfseries}l Y}
+\toprule
+\rowcolor{srmsoft} Regle & Enonce \\
+\midrule
+RG2  & Un vehicule en location doit referencer un fournisseur. \\
+RG3  & Un vehicule ne peut avoir qu'une seule affectation active a la fois (index unique partiel). \\
+RG4  & Une affectation ne peut avoir qu'une seule carte carburant active (index unique partiel). \\
+RG11 & Le conducteur accompagnateur d'une visite est deduit de l'affectation active a la date. \\
+RG14 & Un Responsable provincial n'accede qu'aux donnees de sa province. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+\section{Ajouter un nouveau module}
+La regularite du projet rend l'ajout d'un module mecanique. Voici la recette, en reprenant le module
+Vehicule comme modele.
+
+\subsection{Cote backend}
+\begin{enumerate}
+  \item Creer le package \texttt{ma/srm/fleet/<domaine>/<module>/}.
+  \item Ecrire l'\textbf{entite} JPA et l'ajouter au schema via une \textbf{nouvelle} migration Flyway
+        (\texttt{V9\_\_...sql}), sans toucher aux migrations existantes.
+  \item Definir les \textbf{DTO} (record \texttt{...Request} valide, \texttt{...Response}).
+  \item Creer le \textbf{repository} (\texttt{extends JpaRepository}).
+  \item Ecrire le \textbf{service} (\texttt{@Transactional}) : regles metier, cloisonnement province,
+        mapping vers DTO ecrit a la main.
+  \item Ajouter les \textbf{Specifications} si le module a une recherche filtrable.
+  \item Exposer le \textbf{controleur} REST (\texttt{/api/v1/...}), mince, avec \texttt{@PreAuthorize} la
+        ou c'est necessaire.
+  \item Ajouter des \textbf{tests} (unitaires, et d'integration Testcontainers pour toute contrainte de base).
+\end{enumerate}
+
+\subsection{Cote frontend}
+\begin{enumerate}
+  \item Creer le dossier \texttt{features/<module>/}.
+  \item Definir les \textbf{modeles} TypeScript et le \textbf{service} HTTP vers \texttt{/api/v1/...}.
+  \item Ecrire les composants \textbf{liste}, \textbf{formulaire}, \textbf{detail}, a partir des
+        \textbf{primitives} du design system (aucun style redefini inutilement).
+  \item Declarer les \textbf{routes} du module et les rattacher au menu, avec les gardes adaptees.
+\end{enumerate}
+
+\begin{srmok}
+Regle simple : un nouveau module doit ressembler aux modules existants. En cas de doute, copier la
+structure du module Vehicule (backend) et du module Vehicules (frontend), puis adapter.
+\end{srmok}
+
+% =====================================================================
+\section{Conventions Git et flux de travail}
+
+\subsection{Branches}
+\begin{itemize}
+  \item \texttt{main} : code livrable, protegee.
+  \item \texttt{develop} : integration continue, protegee.
+  \item \texttt{feature/<module>-<description>} : une fonctionnalite.
+  \item \texttt{fix/<module>-<description>} : une correction. \texttt{hotfix/<description>} : correction urgente sur \texttt{main}. \texttt{chore/<description>} : tache technique.
+\end{itemize}
+
+\subsection{Commits (Conventional Commits)}
+Format : \texttt{type(scope): description a l'imperatif}. Le \texttt{scope} est le module concerne.
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\ttfamily}l Y}
+\toprule
+\rowcolor{srmsoft} \textmd{\bfseries Type} & Usage \\
+\midrule
+feat     & Nouvelle fonctionnalite. \\
+fix      & Correction de bug. \\
+refactor & Reorganisation sans changement de comportement. \\
+test     & Ajout ou modification de tests. \\
+docs     & Documentation. \\
+chore, build, ci, perf & Taches techniques, outillage, integration continue, performance. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Exemple : \texttt{feat(carte): validation d'une demande et emission de la carte}.
+
+\subsection{Pull requests}
+\begin{enumerate}
+  \item Rebaser sur \texttt{develop} a jour avant d'ouvrir la PR.
+  \item Une PR egale une tache, petite et ciblee ; remplir le modele (objectif, perimetre, test).
+  \item CI verte obligatoire ; un relecteur obligatoire (l'autre developpeur), pas d'auto-fusion.
+  \item Fusion en \textbf{squash} vers \texttt{develop}, puis suppression de la branche.
+\end{enumerate}
+
+\subsection{Regles de code}
+\begin{itemize}
+  \item Backend : injection par constructeur, \texttt{@Transactional} en couche service, aucune logique dans les controleurs.
+  \item Frontend : composants standalone, typage strict, pas de \texttt{any}.
+  \item Formatage verifie en CI : Spotless et Google Java Format cote backend, ESLint et Prettier cote frontend.
+\end{itemize}
+
+% =====================================================================
+\section{Decisions d'architecture (resume)}
+Les choix structurants sont consignes sous forme de decisions courtes. Resume :
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\bfseries}l Y}
+\toprule
+\rowcolor{srmsoft} Decision & Raison \\
+\midrule
+Design system maison & Coherence visuelle totale, pas de librairie d'interface externe. \\
+Mappers manuels & Mapping explicite et lisible, sans generation de code (pas de MapStruct). \\
+Alertes in-app uniquement & Pas de service courriel valide en production ; canal courriel reporte. \\
+Exports CSV et PDF & OpenPDF aux couleurs de la charte, un seul generateur pour tous les modules. \\
+Tests Testcontainers & Valider sur un vrai PostgreSQL les regles portees par la base (RG3, RG4). \\
+Init admin securisee & Aucun mot de passe par defaut : le compte admin vient de la configuration. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+\section{Tests et integration continue}
+\begin{itemize}
+  \item \textbf{Backend} : tests unitaires et tests d'integration Testcontainers (PostgreSQL reel via
+        Docker), qui valident les migrations, le seed et les contraintes critiques RG3 et RG4.
+  \item \textbf{Frontend} : \texttt{lint} puis \texttt{build} de production.
+  \item \textbf{CI} (GitHub Actions) : sur chaque push et pull request vers \texttt{main} et
+        \texttt{develop}, deux jobs (backend et frontend) doivent passer au vert avant toute fusion.
+\end{itemize}
+
+\vspace{0.4cm}
+\srmrule
+\begin{center}\small\textcolor{srmslate}{Fin du document. SRM Fleet, Oussama BENAZZOUZ et TAKI Fadlouallah.}\end{center}
+
+\end{document}

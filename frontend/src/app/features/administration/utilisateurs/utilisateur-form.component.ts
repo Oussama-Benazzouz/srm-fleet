@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AdministrationService } from '../administration.service';
 import { Province, UtilisateurRequest } from '../utilisateur.models';
+import { ToastService } from '../../../core/ui/toast.service';
 
 const LIST_URL = '/administration/utilisateurs';
 
@@ -13,16 +14,25 @@ const LIST_URL = '/administration/utilisateurs';
   imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="page">
+    <section class="page page--form">
+      <a [routerLink]="listUrl" class="back-link">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path d="M12 5l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Comptes utilisateurs
+      </a>
+
       <header class="page__head">
-        <h2>{{ id() ? 'Modifier le compte' : 'Nouveau compte' }}</h2>
-        <p class="text-muted text-sm">
-          {{
-            id()
-              ? 'Mettez à jour les informations du compte.'
-              : 'Renseignez les informations du nouveau collaborateur.'
-          }}
-        </p>
+        <div>
+          <h1>{{ id() ? 'Modifier le compte' : 'Nouveau compte' }}</h1>
+          <p class="page__subtitle">
+            {{
+              id()
+                ? 'Mettez à jour les informations du compte.'
+                : 'Renseignez les informations du nouveau collaborateur.'
+            }}
+          </p>
+        </div>
       </header>
 
       @if (error()) {
@@ -111,17 +121,6 @@ const LIST_URL = '/administration/utilisateurs';
   `,
   styles: [
     `
-      .page {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-5);
-        max-width: 680px;
-      }
-
-      .page__head p {
-        margin-top: var(--s-1);
-      }
-
       .page__panel {
         padding: var(--s-5);
       }
@@ -175,6 +174,7 @@ export class UtilisateurFormComponent implements OnInit {
   private readonly service = inject(AdministrationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   protected readonly listUrl = LIST_URL;
   protected readonly id = signal<number | null>(null);
@@ -277,9 +277,12 @@ export class UtilisateurFormComponent implements OnInit {
       : this.service.creerUtilisateur(req);
 
     request$.subscribe({
-      next: () => this.router.navigateByUrl(LIST_URL),
+      next: () => {
+        this.toast.success(id ? 'Compte mis à jour' : 'Compte créé', req.login);
+        this.router.navigateByUrl(LIST_URL);
+      },
       error: (err: HttpErrorResponse) => {
-        this.error.set(err?.error?.detail ?? 'Une erreur est survenue lors de l’enregistrement.');
+        this.toast.error('Enregistrement impossible', err?.error?.detail);
         this.saving.set(false);
       },
     });

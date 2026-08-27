@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { ToastService } from '../../core/ui/toast.service';
 import { ConformiteService } from './conformite.service';
 import { OptionVehicule } from './conformite.models';
 
@@ -9,12 +10,18 @@ import { OptionVehicule } from './conformite.models';
   imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="page">
+    <section class="page page--form">
+      <a routerLink="/visites-techniques" class="back-link">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path d="M12 5l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Visites techniques
+      </a>
+
       <header class="page__head">
         <div>
-          <a routerLink="/visites-techniques" class="back">← Visites techniques</a>
-          <h2>Nouvelle visite technique</h2>
-          <p class="text-muted text-sm">
+          <h1>Nouvelle visite technique</h1>
+          <p class="page__subtitle">
             Le conducteur accompagnateur est déterminé automatiquement à partir de l'affectation
             active du véhicule à la date de visite (RG11).
           </p>
@@ -99,31 +106,6 @@ import { OptionVehicule } from './conformite.models';
   `,
   styles: [
     `
-      .page {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-5);
-        max-width: 680px;
-      }
-      .back {
-        display: inline-block;
-        margin-bottom: var(--s-2);
-        font-size: var(--fs-sm);
-        color: var(--c-text-muted);
-        text-decoration: none;
-      }
-      .back:hover {
-        color: var(--c-text);
-      }
-      .page__head p {
-        margin-top: var(--s-1);
-      }
-      .page__panel {
-        padding: var(--s-5);
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-4);
-      }
       .form__grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -145,6 +127,7 @@ export class VisiteFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(ConformiteService);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   protected readonly vehicules = signal<OptionVehicule[]>([]);
   protected readonly compagnies = signal<string[]>([]);
@@ -180,9 +163,12 @@ export class VisiteFormComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     this.service.creerVisite(v).subscribe({
-      next: () => this.router.navigate(['/visites-techniques']),
+      next: () => {
+        this.toast.success('Visite technique enregistrée');
+        this.router.navigate(['/visites-techniques']);
+      },
       error: (e) => {
-        this.error.set(e?.error?.detail ?? "Échec de l'enregistrement.");
+        this.toast.error('Enregistrement impossible', e?.error?.detail);
         this.saving.set(false);
       },
     });

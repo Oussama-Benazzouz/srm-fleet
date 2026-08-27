@@ -16,6 +16,13 @@ export const FLOTTE_ROUTES: Routes = [
   {
     path: ':id',
     title: 'Fiche véhicule',
+    loadComponent: () =>
+      import('./vehicule-detail.component').then((m) => m.VehiculeDetailComponent),
+  },
+  {
+    path: ':id/modifier',
+    title: 'Modifier le véhicule',
+    canActivate: [adminGuard],
     loadComponent: () => import('./vehicule-form.component').then((m) => m.VehiculeFormComponent),
   },
 ];

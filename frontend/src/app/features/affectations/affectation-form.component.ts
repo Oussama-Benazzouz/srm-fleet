@@ -1,20 +1,28 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { ToastService } from '../../core/ui/toast.service';
 import { AffectationService } from './affectation.service';
 import { OptionConducteur, OptionVehicule } from './affectation.models';
 
 @Component({
   selector: 'app-affectation-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="page">
+    <section class="page page--form">
+      <a routerLink="/affectations" class="back-link">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path d="M12 5l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Affectations
+      </a>
+
       <header class="page__head">
         <div>
-          <h2>Nouvelle affectation</h2>
-          <p class="text-muted text-sm">Associer un véhicule disponible à un conducteur de la même province.</p>
+          <h1>Nouvelle affectation</h1>
+          <p class="page__subtitle">Associer un véhicule disponible à un conducteur de la même province.</p>
         </div>
       </header>
 
@@ -67,9 +75,6 @@ import { OptionConducteur, OptionVehicule } from './affectation.models';
     </section>
   `,
   styles: [`
-    .page { display:flex; flex-direction:column; gap:var(--s-5); max-width:680px; }
-    .page__head p { margin-top:var(--s-1); }
-    .page__panel { padding:var(--s-5); display:flex; flex-direction:column; gap:var(--s-4); }
     .form__grid { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-4); }
     .form__actions { display:flex; justify-content:flex-end; }
     @media (max-width:560px){ .form__grid { grid-template-columns:1fr; } }
@@ -79,6 +84,7 @@ export class AffectationFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(AffectationService);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   protected readonly vehicules = signal<OptionVehicule[]>([]);
   protected readonly conducteurs = signal<OptionConducteur[]>([]);
@@ -137,8 +143,14 @@ export class AffectationFormComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     this.service.creer(this.form.getRawValue() as never).subscribe({
-      next: () => this.router.navigate(['/affectations']),
-      error: (e) => { this.error.set(e?.error?.detail ?? 'Échec de la création.'); this.saving.set(false); },
+      next: () => {
+        this.toast.success('Affectation créée');
+        this.router.navigate(['/affectations']);
+      },
+      error: (e) => {
+        this.toast.error('Création impossible', e?.error?.detail);
+        this.saving.set(false);
+      },
     });
   }
 }

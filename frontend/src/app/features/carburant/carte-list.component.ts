@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
+import { ConfirmService } from '../../core/ui/confirm.service';
+import { ToastService } from '../../core/ui/toast.service';
 import { ExportButtonComponent } from '../exports/export-button.component';
 import { CarburantService } from './carburant.service';
 import { Carte, STATUT_CARTE_LABELS, StatutCarte } from './carburant.models';
@@ -127,7 +129,6 @@ import { Carte, STATUT_CARTE_LABELS, StatutCarte } from './carburant.models';
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1180px;
       }
       .page__head p {
         margin-top: var(--s-1);
@@ -226,6 +227,8 @@ import { Carte, STATUT_CARTE_LABELS, StatutCarte } from './carburant.models';
 export class CarteListComponent implements OnInit {
   private readonly service = inject(CarburantService);
   private readonly auth = inject(AuthService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly toast = inject(ToastService);
   protected readonly isAdmin = this.auth.isAdmin;
 
   protected readonly cartes = signal<Carte[]>([]);
@@ -262,17 +265,25 @@ export class CarteListComponent implements OnInit {
     this.charger();
   }
 
-  protected cloturer(c: Carte): void {
-    if (!confirm(`Clôturer définitivement la carte ${c.numeroCarte} ?`)) return;
+  protected async cloturer(c: Carte): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Clôturer la carte',
+      message: `Voulez-vous clôturer définitivement la carte ${c.numeroCarte} ? Cette action est irréversible.`,
+      confirmLabel: 'Clôturer',
+      danger: true,
+    });
+    if (!ok) return;
     this.busyId.set(c.id);
     this.error.set(null);
     this.service.cloturerCarte(c.id).subscribe({
       next: () => {
         this.busyId.set(null);
+        this.toast.success('Carte clôturée', c.numeroCarte);
         this.charger();
       },
       error: (e) => {
         this.error.set(e?.error?.detail ?? 'Clôture impossible.');
+        this.toast.error('Clôture impossible', e?.error?.detail);
         this.busyId.set(null);
       },
     });

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ExportButtonComponent } from '../exports/export-button.component';
+import { ConfirmService } from '../../core/ui/confirm.service';
+import { ToastService } from '../../core/ui/toast.service';
 import { AffectationService } from './affectation.service';
 import { Affectation } from './affectation.models';
 
@@ -112,7 +114,7 @@ import { Affectation } from './affectation.models';
     </section>
   `,
   styles: [`
-    .page { display:flex; flex-direction:column; gap:var(--s-5); max-width:1180px; }
+    .page { display:flex; flex-direction:column; gap:var(--s-5); }
     .page__head { display:flex; align-items:flex-start; justify-content:space-between; gap:var(--s-4); }
     .page__title { display:flex; align-items:center; gap:var(--s-3); }
     .count { display:inline-flex; align-items:center; justify-content:center; min-width:1.5rem; height:1.5rem; padding:0 var(--s-2); font-size:var(--fs-xs); font-weight:600; color:var(--c-text-muted); background:var(--c-surface-alt); border-radius:var(--r-full); }
@@ -137,6 +139,8 @@ import { Affectation } from './affectation.models';
 })
 export class AffectationListComponent implements OnInit {
   private readonly service = inject(AffectationService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly toast = inject(ToastService);
   protected readonly affectations = signal<Affectation[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -159,12 +163,22 @@ export class AffectationListComponent implements OnInit {
     this.charger();
   }
 
-  protected cloturer(a: Affectation): void {
+  protected async cloturer(a: Affectation): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: "Clôturer l'affectation",
+      message: 'Voulez-vous clôturer cette affectation ? Le véhicule redeviendra disponible.',
+      confirmLabel: 'Clôturer',
+    });
+    if (!ok) return;
     this.busyId.set(a.id);
     this.error.set(null);
     this.service.cloturer(a.id, null).subscribe({
-      next: () => { this.busyId.set(null); this.charger(); },
-      error: (e) => { this.error.set(e?.error?.detail ?? 'Échec de la clôture.'); this.busyId.set(null); },
+      next: () => { this.busyId.set(null); this.toast.success('Affectation clôturée'); this.charger(); },
+      error: (e) => {
+        this.error.set(e?.error?.detail ?? 'Échec de la clôture.');
+        this.toast.error('Clôture impossible', e?.error?.detail);
+        this.busyId.set(null);
+      },
     });
   }
 }

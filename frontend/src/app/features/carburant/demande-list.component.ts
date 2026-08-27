@@ -125,7 +125,6 @@ import { Demande, STATUT_DEMANDE_LABELS, StatutDemande } from './carburant.model
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1180px;
       }
       .page__head {
         display: flex;

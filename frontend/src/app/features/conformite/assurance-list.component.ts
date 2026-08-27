@@ -107,7 +107,6 @@ import { Assurance, OptionVehicule } from './conformite.models';
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1180px;
       }
       .page__head {
         display: flex;

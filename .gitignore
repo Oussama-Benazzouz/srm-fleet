@@ -31,3 +31,5 @@ logs/
 ### Pièces jointes stockées en local (dev) ###
 backend/data/
 data/
+
+.claude/

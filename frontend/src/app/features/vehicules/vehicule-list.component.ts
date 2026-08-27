@@ -164,9 +164,7 @@ import { MODE_LABELS, STATUT_LABELS, StatutVehicule, TYPES_VEHICULE, Vehicule } 
                     </td>
                     <td>
                       <div class="ctable__actions">
-                        <a class="btn btn--sm" [routerLink]="[v.id]">
-                          {{ isAdmin() ? 'Modifier' : 'Consulter' }}
-                        </a>
+                        <a class="btn btn--sm" [routerLink]="[v.id]">Consulter</a>
                         <a class="btn btn--sm" [routerLink]="['/affectations/historique/vehicule', v.id]">
                           Historique
                         </a>
@@ -187,7 +185,6 @@ import { MODE_LABELS, STATUT_LABELS, StatutVehicule, TYPES_VEHICULE, Vehicule } 
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1180px;
       }
 
       .page__head {

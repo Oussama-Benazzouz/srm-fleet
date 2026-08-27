@@ -62,7 +62,6 @@ import { Province } from '../utilisateur.models';
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 560px;
       }
 
       .page__head p {

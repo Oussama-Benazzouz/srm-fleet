@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
 import { AdministrationService } from '../administration/administration.service';
 import { Departement, Province } from '../administration/utilisateur.models';
+import { ToastService } from '../../core/ui/toast.service';
 import { FlotteService } from './flotte.service';
 import { Fournisseur, ModeAcquisition, StatutVehicule, TYPES_VEHICULE } from './flotte.models';
 
@@ -13,14 +13,18 @@ import { Fournisseur, ModeAcquisition, StatutVehicule, TYPES_VEHICULE } from './
   imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="page">
+    <section class="page page--form">
+      <a [routerLink]="retour()" class="back-link">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path d="M12 5l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        {{ id() ? 'Fiche véhicule' : 'Véhicules' }}
+      </a>
+
       <header class="page__head">
         <div>
-          <a routerLink="/vehicules" class="back">← Véhicules</a>
-          <h2>{{ id() ? 'Véhicule' : 'Nouveau véhicule' }}</h2>
-          <p class="text-muted text-sm">
-            {{ readonly() ? 'Consultation (lecture seule).' : 'Fiche véhicule, rattachement et contrat.' }}
-          </p>
+          <h1>{{ id() ? 'Modifier le véhicule' : 'Nouveau véhicule' }}</h1>
+          <p class="page__subtitle">Identité, rattachement géographique et contrat.</p>
         </div>
       </header>
 
@@ -29,45 +33,35 @@ import { Fournisseur, ModeAcquisition, StatutVehicule, TYPES_VEHICULE } from './
       }
 
       <form class="card page__panel" [formGroup]="form" (ngSubmit)="enregistrer()">
-        <div class="form__grid">
+        <div class="form-grid">
           <div class="field">
-            <label class="field__label" for="imm">Immatriculation</label>
-            <input
-              id="imm"
-              class="input"
-              formControlName="immatriculation"
-              [attr.aria-invalid]="isInvalid('immatriculation')"
-            />
+            <label class="field__label" for="imm" data-required>Immatriculation</label>
+            <input id="imm" class="input" formControlName="immatriculation" [attr.aria-invalid]="isInvalid('immatriculation')" />
             @if (isInvalid('immatriculation')) {
               <p class="field__error">L'immatriculation est obligatoire.</p>
             }
           </div>
           <div class="field">
-            <label class="field__label" for="type">Type</label>
-            <select
-              id="type"
-              class="input select"
-              formControlName="typeVehicule"
-              [attr.aria-invalid]="isInvalid('typeVehicule')"
-            >
-              <option value="" disabled>Catégorie</option>
+            <label class="field__label" for="type" data-required>Catégorie</label>
+            <select id="type" class="input select" formControlName="typeVehicule" [attr.aria-invalid]="isInvalid('typeVehicule')">
+              <option value="" disabled>Sélectionner une catégorie</option>
               @for (t of typesVehicule; track t) {
                 <option [value]="t">{{ t }}</option>
               }
             </select>
             @if (isInvalid('typeVehicule')) {
-              <p class="field__error">Le type est obligatoire.</p>
+              <p class="field__error">La catégorie est obligatoire.</p>
             }
           </div>
           <div class="field">
-            <label class="field__label" for="mode">Mode d'acquisition</label>
+            <label class="field__label" for="mode" data-required>Mode d'acquisition</label>
             <select id="mode" class="input select" formControlName="modeAcquisition">
               <option value="PROPRIETE">Propriété</option>
               <option value="LOCATION">Location</option>
             </select>
           </div>
           <div class="field">
-            <label class="field__label" for="statut">Statut</label>
+            <label class="field__label" for="statut" data-required>Statut</label>
             <select id="statut" class="input select" formControlName="statut">
               <option value="DISPONIBLE">Disponible</option>
               <option value="AFFECTE">Affecté</option>
@@ -76,13 +70,8 @@ import { Fournisseur, ModeAcquisition, StatutVehicule, TYPES_VEHICULE } from './
             </select>
           </div>
           <div class="field">
-            <label class="field__label" for="province">Province</label>
-            <select
-              id="province"
-              class="input select"
-              formControlName="provinceId"
-              [attr.aria-invalid]="isInvalid('provinceId')"
-            >
+            <label class="field__label" for="province" data-required>Province</label>
+            <select id="province" class="input select" formControlName="provinceId" [attr.aria-invalid]="isInvalid('provinceId')">
               <option [ngValue]="null" disabled>Sélectionner une province</option>
               @for (p of provinces(); track p.id) {
                 <option [ngValue]="p.id">{{ p.libelle }}</option>
@@ -108,18 +97,13 @@ import { Fournisseur, ModeAcquisition, StatutVehicule, TYPES_VEHICULE } from './
         </div>
 
         @if (mode() === 'LOCATION') {
-          <fieldset class="contrat">
+          <fieldset class="fieldset">
             <legend>Contrat de location</legend>
-            <p class="text-muted text-sm">Un fournisseur est obligatoire pour un véhicule en location (RG2).</p>
-            <div class="form__grid">
+            <p class="field__hint">Un fournisseur est obligatoire pour un véhicule en location (RG2).</p>
+            <div class="form-grid">
               <div class="field">
-                <label class="field__label" for="fournisseur">Fournisseur</label>
-                <select
-                  id="fournisseur"
-                  class="input select"
-                  formControlName="fournisseurId"
-                  [attr.aria-invalid]="fournisseurManquant()"
-                >
+                <label class="field__label" for="fournisseur" data-required>Fournisseur</label>
+                <select id="fournisseur" class="input select" formControlName="fournisseurId" [attr.aria-invalid]="fournisseurManquant()">
                   <option [ngValue]="null">—</option>
                   @for (f of fournisseurs(); track f.id) {
                     <option [ngValue]="f.id">{{ f.raisonSociale }}</option>
@@ -153,84 +137,25 @@ import { Fournisseur, ModeAcquisition, StatutVehicule, TYPES_VEHICULE } from './
           </fieldset>
         }
 
-        @if (!readonly()) {
-          <div class="form__actions">
-            <button type="submit" class="btn btn--primary" [disabled]="saving()">
-              @if (saving()) {
-                <span class="spinner" aria-hidden="true"></span>
-              }
-              Enregistrer
-            </button>
-          </div>
-        }
+        <div class="form-actions">
+          <a class="btn" [routerLink]="retour()">Annuler</a>
+          <button type="submit" class="btn btn--primary" [disabled]="saving()">
+            @if (saving()) {
+              <span class="spinner" aria-hidden="true"></span>
+            }
+            Enregistrer
+          </button>
+        </div>
       </form>
     </section>
   `,
   styles: [
     `
-      .page {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-5);
-        max-width: 720px;
-      }
-
-      .back {
-        display: inline-block;
-        margin-bottom: var(--s-2);
-        font-size: var(--fs-sm);
-        color: var(--c-text-muted);
-        text-decoration: none;
-      }
-
-      .back:hover {
-        color: var(--c-text);
-      }
-
-      .page__head p {
-        margin-top: var(--s-1);
-      }
-
       .page__panel {
         padding: var(--s-5);
         display: flex;
         flex-direction: column;
-        gap: var(--s-4);
-      }
-
-      .form__grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--s-4);
-      }
-
-      .contrat {
-        margin: 0;
-        padding: var(--s-4);
-        border: 1px solid var(--c-border);
-        border-radius: var(--r-md);
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-4);
-      }
-
-      .contrat legend {
-        padding: 0 var(--s-2);
-        font-size: var(--fs-sm);
-        font-weight: 600;
-        color: var(--c-text);
-      }
-
-      .form__actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: var(--s-3);
-      }
-
-      @media (max-width: 560px) {
-        .form__grid {
-          grid-template-columns: 1fr;
-        }
+        gap: var(--s-5);
       }
     `,
   ],
@@ -239,7 +164,7 @@ export class VehiculeFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(FlotteService);
   private readonly referentiel = inject(AdministrationService);
-  private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -252,9 +177,6 @@ export class VehiculeFormComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly saving = signal(false);
   protected readonly submitted = signal(false);
-
-  /** Le Responsable Provincial consulte sans modifier (contrôle réel côté backend — RG12). */
-  protected readonly readonly = signal(!this.auth.isAdmin());
 
   protected readonly form = this.fb.nonNullable.group({
     immatriculation: ['', Validators.required],
@@ -272,10 +194,14 @@ export class VehiculeFormComponent implements OnInit {
     fournisseurId: [null as number | null],
   });
 
-  /** Suit le mode d'acquisition pour afficher/masquer la section contrat (RG2). */
   protected readonly mode = toSignal(this.form.controls.modeAcquisition.valueChanges, {
     initialValue: this.form.controls.modeAcquisition.value,
   });
+
+  /** Cible du bouton retour : la fiche si l'on édite, la liste sinon. */
+  protected retour(): string {
+    return this.id() ? `/vehicules/${this.id()}` : '/vehicules';
+  }
 
   ngOnInit(): void {
     this.referentiel.listerProvinces().subscribe((list) => this.provinces.set(list));
@@ -303,11 +229,6 @@ export class VehiculeFormComponent implements OnInit {
         });
       });
     }
-
-    // Lecture seule : on neutralise l'édition côté UI (le backend reste la barrière).
-    if (this.readonly()) {
-      this.form.disable();
-    }
   }
 
   protected isInvalid(name: string): boolean {
@@ -315,9 +236,10 @@ export class VehiculeFormComponent implements OnInit {
     return !!c && c.invalid && (c.touched || this.submitted());
   }
 
-  /** RG2 côté client : signale un fournisseur manquant après tentative d'envoi en location. */
   protected fournisseurManquant(): boolean {
-    return this.submitted() && this.mode() === 'LOCATION' && this.form.controls.fournisseurId.value == null;
+    return (
+      this.submitted() && this.mode() === 'LOCATION' && this.form.controls.fournisseurId.value == null
+    );
   }
 
   protected enregistrer(): void {
@@ -330,11 +252,18 @@ export class VehiculeFormComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     const req = this.form.getRawValue();
-    const obs = this.id() ? this.service.modifierVehicule(this.id()!, req) : this.service.creerVehicule(req);
+    const edition = this.id() != null;
+    const obs = edition ? this.service.modifierVehicule(this.id()!, req) : this.service.creerVehicule(req);
     obs.subscribe({
-      next: () => this.router.navigate(['/vehicules']),
+      next: (v) => {
+        this.toast.success(
+          edition ? 'Véhicule mis à jour' : 'Véhicule créé',
+          v.immatriculation,
+        );
+        this.router.navigate(['/vehicules', v.id]);
+      },
       error: (e) => {
-        this.error.set(e?.error?.detail ?? "Erreur lors de l'enregistrement.");
+        this.toast.error('Enregistrement impossible', e?.error?.detail);
         this.saving.set(false);
       },
     });

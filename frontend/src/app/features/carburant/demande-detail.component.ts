@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { ToastService } from '../../core/ui/toast.service';
 import { CarburantService } from './carburant.service';
 import { Demande, OptionFournisseur, STATUT_DEMANDE_LABELS } from './carburant.models';
 
@@ -10,12 +11,18 @@ import { Demande, OptionFournisseur, STATUT_DEMANDE_LABELS } from './carburant.m
   imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="page">
+    <section class="page page--form">
+      <a routerLink="/demandes" class="back-link">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path d="M12 5l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Demandes
+      </a>
+
       <header class="page__head">
         <div>
-          <a routerLink="/demandes" class="back">← Demandes</a>
-          <h2>Demande de carte</h2>
-          <p class="text-muted text-sm">Détail de la demande et traitement (central).</p>
+          <h1>Demande de carte</h1>
+          <p class="page__subtitle">Détail de la demande et traitement (central).</p>
         </div>
       </header>
 
@@ -143,31 +150,6 @@ import { Demande, OptionFournisseur, STATUT_DEMANDE_LABELS } from './carburant.m
   `,
   styles: [
     `
-      .page {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-5);
-        max-width: 720px;
-      }
-      .back {
-        display: inline-block;
-        margin-bottom: var(--s-2);
-        font-size: var(--fs-sm);
-        color: var(--c-text-muted);
-        text-decoration: none;
-      }
-      .back:hover {
-        color: var(--c-text);
-      }
-      .page__head p {
-        margin-top: var(--s-1);
-      }
-      .page__panel {
-        padding: var(--s-5);
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-4);
-      }
       .grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -218,6 +200,7 @@ export class DemandeDetailComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   protected readonly isAdmin = this.auth.isAdmin;
   protected readonly demande = signal<Demande | null>(null);
@@ -264,9 +247,13 @@ export class DemandeDetailComponent implements OnInit {
     this.busy.set(true);
     this.error.set(null);
     this.service.validerDemande(this.id, this.form.getRawValue()).subscribe({
-      next: () => this.router.navigate(['/cartes']), // la carte émise apparaît dans la liste des cartes
+      // La carte émise apparaît dans la liste des cartes.
+      next: () => {
+        this.toast.success('Demande approuvée', 'La carte a été émise.');
+        this.router.navigate(['/cartes']);
+      },
       error: (e) => {
-        this.error.set(e?.error?.detail ?? 'Validation impossible.');
+        this.toast.error('Validation impossible', e?.error?.detail);
         this.busy.set(false);
       },
     });
@@ -276,9 +263,12 @@ export class DemandeDetailComponent implements OnInit {
     this.busy.set(true);
     this.error.set(null);
     this.service.refuserDemande(this.id).subscribe({
-      next: () => this.router.navigate(['/demandes']),
+      next: () => {
+        this.toast.success('Demande refusée');
+        this.router.navigate(['/demandes']);
+      },
       error: (e) => {
-        this.error.set(e?.error?.detail ?? 'Refus impossible.');
+        this.toast.error('Refus impossible', e?.error?.detail);
         this.busy.set(false);
       },
     });
