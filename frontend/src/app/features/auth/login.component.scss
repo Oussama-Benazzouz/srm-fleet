@@ -1,63 +1,142 @@
-/* Page de connexion — construite sur les primitives de styles.scss.
-   Aucune couleur n'est codée en dur : tout provient des tokens. */
+/* Écran de connexion — mise en page en deux panneaux : vitrine de marque à
+   gauche (fixe, sur fond bleu institutionnel), formulaire à droite. Toutes les
+   couleurs proviennent des jetons ; le panneau de marque assume un fond bleu
+   dans les deux thèmes (c'est une surface de marque, pas de contenu). */
 
 .login {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-5);
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: var(--s-5);
-  background: var(--c-bg);
+  background: var(--bg);
 }
 
-.login__panel {
-  width: 100%;
-  max-width: 400px;
-  padding: var(--s-6);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--sh-md);
-}
+/* --- Panneau de marque --- */
 
-/* --- En-tête --- */
-
-.login__head {
+.login__brand {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: var(--s-6);
+  justify-content: space-between;
+  gap: var(--s-6);
+  padding: var(--s-7);
+  color: #eaf2fb;
+  background:
+    radial-gradient(120% 120% at 15% 10%, #1c60a6 0%, #14508f 42%, #0c3157 100%);
 }
 
-.login__logo {
+.login__brand-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.login__brand-chip {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  margin-bottom: var(--s-4);
-  font-size: var(--fs-md);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--c-text-invert);
-  background: var(--c-accent);
+  background: #fff;
   border-radius: var(--r-md);
+  overflow: hidden;
+}
+.login__brand-chip img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+.login__brand-name {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
+.login__brand-body {
+  position: relative;
+  max-width: 30rem;
+}
+.login__brand-title {
+  color: #fff;
+  font-size: clamp(1.9rem, 3.5vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+.login__brand-text {
+  margin-top: var(--s-4);
+  font-size: var(--fs-lg);
+  line-height: 1.6;
+  color: #c8ddf2;
+}
+.login__domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin: var(--s-6) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: #dcebfa;
+}
+.login__domains li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-full);
+}
+.dot--eau {
+  background: #6aa0d6;
+}
+.dot--energie {
+  background: var(--amber-500);
+}
+.dot--env {
+  background: var(--green-500);
+}
+
+.login__brand-foot {
+  position: relative;
+  font-size: var(--fs-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9fc0e2;
+}
+
+/* --- Panneau de formulaire --- */
+
+.login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6);
+}
+
+.login__card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: var(--s-6);
+}
 .login__title {
-  font-size: var(--fs-xl);
+  margin-top: var(--s-4);
+  font-size: var(--fs-2xl);
 }
-
 .login__subtitle {
   margin-top: var(--s-2);
   font-size: var(--fs-md);
-  color: var(--c-text-muted);
+  color: var(--text-2);
 }
-
-/* --- Formulaire --- */
 
 .login__form {
   display: flex;
@@ -65,14 +144,6 @@
   gap: var(--s-4);
 }
 
-.alert__icon {
-  flex: none;
-  width: 1rem;
-  height: 1rem;
-  margin-top: 0.125rem;
-}
-
-/* Champ mot de passe : le bouton d'affichage se superpose à l'intérieur. */
 .login__password {
   position: relative;
   display: flex;
@@ -81,7 +152,6 @@
     padding-right: 2.75rem;
   }
 }
-
 .login__reveal {
   position: absolute;
   top: 50%;
@@ -92,7 +162,7 @@
   width: 2rem;
   height: 2rem;
   padding: 0;
-  color: var(--c-text-subtle);
+  color: var(--text-3);
   background: transparent;
   border: 0;
   border-radius: var(--r-sm);
@@ -100,36 +170,35 @@
   transition: color var(--transition);
 
   &:hover {
-    color: var(--c-text);
+    color: var(--text-1);
   }
-
   svg {
     width: 1.125rem;
     height: 1.125rem;
   }
 }
 
-/* Le bouton principal se détache légèrement du formulaire. */
 .login__form .btn--primary {
   margin-top: var(--s-2);
 }
 
 .login__footer {
+  margin-top: var(--s-6);
   font-size: var(--fs-sm);
-  color: var(--c-text-subtle);
+  color: var(--text-3);
 }
 
 /* --- Adaptatif --- */
 
-/* Sur petit écran, la carte occupe toute la largeur sans ombre marquée. */
-@media (max-width: 480px) {
+@media (max-width: 860px) {
   .login {
-    justify-content: flex-start;
-    padding: var(--s-6) var(--s-4) var(--s-4);
+    grid-template-columns: 1fr;
   }
-
+  .login__brand {
+    display: none;
+  }
   .login__panel {
-    padding: var(--s-5) var(--s-4);
-    box-shadow: none;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }

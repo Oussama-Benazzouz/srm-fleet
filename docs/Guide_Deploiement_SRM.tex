@@ -1,0 +1,186 @@
+\documentclass[11pt]{article}
+\usepackage{srmstyle}
+\setsrmdoctitle{Guide de deploiement}
+
+\begin{document}
+
+\srmtitlepage{Guide de deploiement}{Backoffice SRM Fleet sur serveur interne}{Document technique interne}
+
+\tableofcontents
+\vspace{0.6cm}
+\srmrule
+\vspace{0.4cm}
+
+% =====================================================================
+\section{Objectif et principes}
+Ce guide decrit le deploiement du backoffice \textbf{SRM Fleet} sur un serveur interne de
+l'entreprise. La plateforme est concue pour un usage \textbf{strictement interne} : elle n'est
+jamais exposee sur Internet.
+
+\begin{itemize}
+  \item Toute la plateforme tourne en conteneurs (Docker Compose) : base de donnees, backend et frontend.
+  \item \textbf{Seul le frontend} est accessible aux utilisateurs, et \textbf{uniquement sur le reseau interne}.
+  \item Le \textbf{backend} et la \textbf{base de donnees} ne sont pas publies sur l'hote. Ils ne sont
+        joignables que par le reseau interne de Docker. Le frontend (Nginx) relaie les appels
+        \texttt{/api/} vers \texttt{backend:8080}.
+  \item Aucun secret n'est stocke dans le depot. Tout passe par le fichier \texttt{.env} du serveur.
+\end{itemize}
+
+\subsection{Chaine des composants}
+\begin{srmnote}
+Poste utilisateur (LAN) \;$\rightarrow$\; \textbf{Frontend Nginx} (port 80) \;$\rightarrow$\; relais \texttt{/api/}
+\;$\rightarrow$\; \textbf{Backend Spring Boot} (8080) \;$\rightarrow$\; \textbf{PostgreSQL} (5432).\\
+Les fleches de droite restent internes au reseau Docker : elles ne traversent jamais l'hote.
+\end{srmnote}
+
+% =====================================================================
+\section{Prerequis du serveur}
+\begin{itemize}
+  \item Linux avec \textbf{Docker Engine} et \textbf{Docker Compose v2}.
+  \item Serveur raccorde au reseau interne (adresse LAN, par exemple \texttt{10.0.0.10}), sans aucune
+        redirection de port depuis le pare-feu peripherique et sans adresse IP publique routable.
+  \item Environ 2 vCPU et 2 a 4 Go de RAM pour une charge moderee. Prevoir de l'espace disque pour la
+        base de donnees et les pieces jointes.
+\end{itemize}
+
+% =====================================================================
+\section{Recuperation du code}
+\begin{lstlisting}[language=bash]
+git clone <URL_DU_DEPOT_INTERNE> srm-fleet
+cd srm-fleet
+git checkout main      # ou le tag de version a deployer
+\end{lstlisting}
+
+% =====================================================================
+\section{Configuration des secrets (\texttt{.env})}
+\begin{lstlisting}[language=bash]
+cp .env.example .env
+\end{lstlisting}
+
+Renseigner des valeurs fortes et propres a la production :
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\linewidth}{>{\bfseries}l Y}
+\toprule
+\rowcolor{srmsoft} Variable & Recommandation \\
+\midrule
+POSTGRES\_PASSWORD & Mot de passe aleatoire long. \\
+JWT\_SECRET & Au moins 32 octets aleatoires, par exemple \texttt{openssl rand -base64 48}. Le backend refuse de demarrer si la cle est trop courte. \\
+APP\_ADMIN\_INITIAL\_PASSWORD & Mot de passe fort pour le compte \texttt{admin}, a changer apres la premiere connexion. \\
+JWT\_EXPIRATION\_MS & Duree de validite des jetons, par exemple \texttt{86400000} (24 heures). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{srmwarn}
+Le fichier \texttt{.env} ne doit jamais etre versionne (il est deja dans \texttt{.gitignore}).
+Restreindre ses droits sur le serveur : \texttt{chmod 600 .env}.
+\end{srmwarn}
+
+% =====================================================================
+\section{Restreindre l'acces au reseau interne}
+Le fichier \texttt{docker-compose.yml} par defaut publie les ports sur toutes les interfaces
+(\texttt{0.0.0.0}), ce qui convient au developpement mais pas a la production. On ajoute un fichier
+de surcharge de production qui expose le frontend uniquement sur l'IP interne du serveur et ne publie
+ni le backend ni la base.
+
+Creer \texttt{docker-compose.prod.yml} :
+\begin{lstlisting}[language=bash]
+services:
+  db:
+    ports: !reset []          # la base reste interne au reseau Docker
+  backend:
+    ports: !reset []          # le backend n'est joignable que via le frontend
+  frontend:
+    ports: !reset
+      - "10.0.0.10:80:80"     # remplacer par l'IP interne du serveur
+\end{lstlisting}
+
+\subsection{Defense en profondeur (recommande)}
+\begin{itemize}
+  \item Pare-feu de l'hote : n'autoriser le port 80 que depuis le sous-reseau interne.
+  \begin{lstlisting}[language=bash]
+ufw default deny incoming
+ufw allow from 10.0.0.0/8 to any port 80 proto tcp
+ufw enable
+  \end{lstlisting}
+  \item Optionnel : placer le service derriere le reverse proxy interne de l'entreprise avec TLS
+        (certificat de l'autorite interne), en n'acceptant que le trafic du LAN.
+\end{itemize}
+
+% =====================================================================
+\section{Lancement}
+\begin{lstlisting}[language=bash]
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+\end{lstlisting}
+
+Verifications :
+\begin{lstlisting}[language=bash]
+docker compose ps                 # tous les services "healthy"
+curl -f http://localhost:80/      # le frontend repond (depuis le serveur)
+docker compose logs -f backend    # migrations Flyway appliquees, pas d'erreur
+\end{lstlisting}
+
+Depuis un poste du reseau interne, ouvrir \texttt{http://10.0.0.10/}.
+
+% =====================================================================
+\section{Premiere connexion}
+\begin{itemize}
+  \item Se connecter avec le compte \texttt{admin} et le mot de passe \texttt{APP\_ADMIN\_INITIAL\_PASSWORD}.
+  \item Changer immediatement ce mot de passe, puis creer les comptes des responsables provinciaux.
+  \item Si la variable n'a pas ete fournie, le compte \texttt{admin} reste inutilisable par securite.
+        Renseigner \texttt{APP\_ADMIN\_INITIAL\_PASSWORD} puis relancer \texttt{docker compose ... up -d}.
+\end{itemize}
+
+% =====================================================================
+\section{Persistance et sauvegardes}
+Deux volumes Docker persistants :
+\begin{itemize}
+  \item \texttt{db-data} : donnees PostgreSQL.
+  \item \texttt{documents-data} : pieces jointes des sinistres (\texttt{/app/data/documents}).
+\end{itemize}
+
+Sauvegardes recommandees (quotidiennes, conservees hors du serveur) :
+\begin{lstlisting}[language=bash]
+# Base de donnees
+docker compose exec -T db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup-$(date +%F).sql
+
+# Pieces jointes
+docker run --rm -v srm-fleet_documents-data:/data -v "$PWD":/backup alpine \
+  tar czf /backup/documents-$(date +%F).tar.gz -C /data .
+\end{lstlisting}
+Restauration : recharger le dump SQL et decompresser l'archive dans le volume correspondant.
+
+% =====================================================================
+\section{Mises a jour}
+\begin{lstlisting}[language=bash]
+git pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+\end{lstlisting}
+Les nouvelles migrations Flyway s'appliquent automatiquement au demarrage du backend. Effectuer une
+sauvegarde (section 8) avant toute mise a jour.
+
+% =====================================================================
+\section{Supervision}
+\begin{itemize}
+  \item Journaux : \texttt{docker compose logs -f [service]}.
+  \item Sante : \texttt{docker compose ps} (healthchecks sur \texttt{db} et \texttt{backend}).
+  \item Le moteur d'alertes s'execute chaque jour (planification \texttt{APP\_ALERTES\_CRON}, par defaut 06h00).
+\end{itemize}
+
+% =====================================================================
+\section{Checklist de securite (remise du projet)}
+\begin{srmok}
+\begin{itemize}
+  \item[$\square$] \texttt{.env} renseigne avec des secrets forts, \texttt{chmod 600}, non versionne.
+  \item[$\square$] \texttt{JWT\_SECRET} d'au moins 32 octets, aleatoire.
+  \item[$\square$] \texttt{APP\_ADMIN\_INITIAL\_PASSWORD} fort, mot de passe \texttt{admin} change apres la premiere connexion.
+  \item[$\square$] Surcharge de production appliquee : frontend lie a l'IP interne, backend et base non publies.
+  \item[$\square$] Pare-feu de l'hote limite au sous-reseau interne, aucune redirection depuis le pare-feu peripherique.
+  \item[$\square$] Sauvegardes base et pieces jointes planifiees et testees (restauration verifiee).
+  \item[$\square$] Acces Git au depot interne restreint a l'equipe.
+\end{itemize}
+\end{srmok}
+
+\end{document}

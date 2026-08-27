@@ -22,15 +22,16 @@ interface Arc {
         <div class="donut__empty text-muted text-sm">Aucune donnée</div>
       } @else {
         <svg viewBox="0 0 42 42" class="donut__svg" role="img" [attr.aria-label]="titre()">
-          <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--c-surface-alt)" stroke-width="4.5" />
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--chart-track)" stroke-width="4" />
           @for (a of arcs(); track $index) {
             <circle
               cx="21"
               cy="21"
               r="15.915"
               fill="none"
-              [attr.stroke]="a.couleur"
-              stroke-width="4.5"
+              stroke-linecap="round"
+              [style.stroke]="a.couleur"
+              stroke-width="4"
               [attr.stroke-dasharray]="a.dasharray"
               [attr.stroke-dashoffset]="a.dashoffset"
             >
@@ -76,13 +77,13 @@ interface Arc {
       .donut__total {
         font-size: 8px;
         font-weight: 700;
-        fill: var(--c-text);
+        fill: var(--text-1);
       }
       .donut__unit {
         font-size: 3px;
         letter-spacing: 0.04em;
         text-transform: uppercase;
-        fill: var(--c-text-subtle);
+        fill: var(--text-3);
       }
       .legend {
         list-style: none;

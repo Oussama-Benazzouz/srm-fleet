@@ -1,0 +1,164 @@
+% =====================================================================
+%  srmstyle.sty — charte visuelle des documents SRM Fleet
+%  Couleurs officielles SRM Souss-Massa, mise en page claire et sobre.
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{srmstyle}[2026/08/27 Style documentaire SRM Fleet]
+
+% --- Encodage, langue, police ---------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+% babel-french affiche par defaut des tirets longs comme puces de liste :
+% on retablit des listes standards pour poser nos propres puces (aucun tiret long).
+\frenchsetup{StandardLists=true}
+\usepackage{amssymb}                % symboles (cases a cocher des checklists)
+\usepackage{helvet}                 % sans-serif (equivalent Arial de la charte)
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{microtype}
+
+% --- Mise en page ----------------------------------------------------
+\usepackage[a4paper,margin=2.4cm,headheight=15pt,headsep=18pt,footskip=28pt]{geometry}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+
+% --- Couleurs de la charte SRM --------------------------------------
+\definecolor{srmblue}{HTML}{14508F}     % bleu institutionnel (l'eau)
+\definecolor{srmbluedk}{HTML}{0F3A66}    % bleu fonce (titres)
+\definecolor{srmgreen}{HTML}{5AB24B}     % vert (l'environnement)
+\definecolor{srmorange}{HTML}{FAB61D}    % orange (l'energie)
+\definecolor{srmink}{HTML}{14181F}       % texte principal
+\definecolor{srmslate}{HTML}{4A515E}     % texte secondaire
+\definecolor{srmline}{HTML}{D9DEE6}      % filets fins
+\definecolor{srmsoft}{HTML}{EEF3F9}      % fond bleu tres clair
+\definecolor{srmcode}{HTML}{F5F7FA}      % fond des blocs de code
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=srmblue,
+  urlcolor=srmblue,
+  citecolor=srmblue,
+  pdfborder={0 0 0}
+}
+
+% --- Filet tricolore de la charte -----------------------------------
+% Trois segments bleu / vert / orange, largeur reglable.
+\newlength{\srmrulew}
+\newcommand{\srmrule}[1][\linewidth]{%
+  \setlength{\srmrulew}{#1}%
+  \noindent
+  \textcolor{srmblue}{\rule{0.5\srmrulew}{2pt}}%
+  \textcolor{srmgreen}{\rule{0.25\srmrulew}{2pt}}%
+  \textcolor{srmorange}{\rule{0.25\srmrulew}{2pt}}%
+}
+
+% --- Titres de section ----------------------------------------------
+\titleformat{\section}
+  {\color{srmbluedk}\Large\bfseries}
+  {\color{srmorange}\thesection}{0.6em}{}
+\titleformat{\subsection}
+  {\color{srmblue}\large\bfseries}
+  {\color{srmorange}\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\color{srmslate}\normalsize\bfseries}
+  {}{0em}{}
+\titlespacing*{\section}{0pt}{2.2ex plus 1ex minus .2ex}{1.2ex}
+\titlespacing*{\subsection}{0pt}{1.8ex plus 1ex minus .2ex}{0.8ex}
+
+% Regle fine sous chaque titre de section.
+\titleformat{name=\section,numberless}
+  {\color{srmbluedk}\Large\bfseries}{}{0em}{}
+\newcommand{\sectionrule}{{\color{srmline}\rule{\linewidth}{0.4pt}}}
+
+% --- En-tete et pied de page ----------------------------------------
+% \srmdoctitle est defini par chaque document.
+\newcommand{\srmdoctitle}{}
+\newcommand{\setsrmdoctitle}[1]{\renewcommand{\srmdoctitle}{#1}}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\footnotesize\textcolor{srmslate}{SRM Fleet}}
+\fancyhead[R]{\footnotesize\textcolor{srmslate}{\srmdoctitle}}
+\fancyfoot[L]{\footnotesize\textcolor{srmslate}{SRM Souss-Massa}}
+\fancyfoot[R]{\footnotesize\textcolor{srmslate}{\thepage}}
+\fancyfoot[C]{\textcolor{srmblue}{\rule{0.06\linewidth}{1.2pt}}\textcolor{srmgreen}{\rule{0.03\linewidth}{1.2pt}}\textcolor{srmorange}{\rule{0.03\linewidth}{1.2pt}}}
+
+% --- Encadres (notes, avertissements, astuces) ----------------------
+\newtcolorbox{srmnote}{
+  colback=srmsoft, colframe=srmblue, boxrule=0pt, leftrule=3pt,
+  arc=1pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
+  fonttitle=\bfseries }
+\newtcolorbox{srmwarn}{
+  colback=srmorange!12, colframe=srmorange, boxrule=0pt, leftrule=3pt,
+  arc=1pt, left=10pt, right=10pt, top=7pt, bottom=7pt }
+\newtcolorbox{srmok}{
+  colback=srmgreen!12, colframe=srmgreen, boxrule=0pt, leftrule=3pt,
+  arc=1pt, left=10pt, right=10pt, top=7pt, bottom=7pt }
+
+% --- Blocs de code ---------------------------------------------------
+\lstdefinestyle{srm}{
+  backgroundcolor=\color{srmcode},
+  basicstyle=\ttfamily\small\color{srmink},
+  keywordstyle=\color{srmblue}\bfseries,
+  commentstyle=\color{srmgreen},
+  stringstyle=\color{srmslate},
+  numberstyle=\ttfamily\footnotesize\color{srmslate},
+  frame=leftline, framerule=2pt, rulecolor=\color{srmblue},
+  framexleftmargin=6pt,
+  xleftmargin=8pt, xrightmargin=4pt,
+  aboveskip=1.1em, belowskip=1.1em,
+  breaklines=true, breakatwhitespace=true,
+  showstringspaces=false, tabsize=2,
+  columns=fullflexible, keepspaces=true,
+  literate={é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {â}{{\^a}}1
+           {î}{{\^i}}1 {ï}{{\"i}}1 {ô}{{\^o}}1 {û}{{\^u}}1 {ù}{{\`u}}1
+           {ç}{{\c c}}1 {É}{{\'E}}1 {È}{{\`E}}1 {À}{{\`A}}1 {œ}{{\oe}}1
+           {«}{{\guillemotleft}}1 {»}{{\guillemotright}}1 {’}{{'}}1
+}
+\lstset{style=srm}
+\newcommand{\code}[1]{{\ttfamily\small #1}}
+
+% --- Listes plus compactes, puces aux couleurs de la charte ---------
+\setlist[itemize,1]{leftmargin=1.5em,itemsep=2pt,topsep=3pt,
+  label=\textcolor{srmblue}{\small\textbullet}}
+\setlist[itemize,2]{leftmargin=1.4em,itemsep=1pt,topsep=2pt,
+  label=\textcolor{srmorange}{\footnotesize\textbullet}}
+\setlist[enumerate]{leftmargin=1.7em,itemsep=2pt,topsep=3pt}
+
+% --- Colonne X centree pour tabularx --------------------------------
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% --- Page de garde ---------------------------------------------------
+% \srmtitlepage{titre}{sous-titre}{numero de version / mention}
+\newcommand{\srmtitlepage}[3]{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{1.2cm}
+    \begin{center}
+      \IfFileExists{logo-srm.jpg}{\includegraphics[height=2.6cm]{logo-srm.jpg}\par\vspace{0.9cm}}{}
+      {\color{srmslate}\large SRM Souss-Massa}\\[0.2cm]
+      {\color{srmslate}\normalsize Gestion de flotte et de logistique}\\[1.1cm]
+      \srmrule[0.82\linewidth]\\[0.9cm]
+      {\color{srmbluedk}\fontsize{30}{34}\selectfont\bfseries #1}\\[0.5cm]
+      {\color{srmblue}\Large #2}\\[0.7cm]
+      {\color{srmslate}\normalsize #3}\\[1.0cm]
+      \srmrule[0.82\linewidth]
+      \vfill
+      {\color{srmslate}\small Redige par}\\[0.15cm]
+      {\color{srmink}\large\bfseries Oussama BENAZZOUZ \quad\textcolor{srmorange}{\textbullet}\quad TAKI Fadlouallah}\\[0.6cm]
+      {\color{srmslate}\small \today}
+    \end{center}
+  \end{titlepage}
+}
+
+\endinput

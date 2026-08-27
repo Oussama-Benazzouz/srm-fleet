@@ -11,8 +11,8 @@ import { AlertesService } from './alertes.service';
     <section class="page">
       <header class="page__head">
         <div>
-          <h2>Seuils d'alerte</h2>
-          <p class="text-muted text-sm">
+          <h1>Seuils d'alerte</h1>
+          <p class="page__subtitle">
             Nombre de jours avant l'échéance à partir duquel une alerte est déclenchée, par type
             (RF-20).
           </p>
@@ -82,15 +82,6 @@ import { AlertesService } from './alertes.service';
   `,
   styles: [
     `
-      .page {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-5);
-        max-width: 720px;
-      }
-      .page__head p {
-        margin-top: var(--s-1);
-      }
       .alert--info {
         color: var(--c-accent);
         background: var(--c-accent-soft);

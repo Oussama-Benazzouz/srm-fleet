@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { ExportService, FormatExport } from './export.service';
+import { ConfirmService } from '../../core/ui/confirm.service';
+import { ToastService } from '../../core/ui/toast.service';
 
 /**
  * Bouton « Exporter » réutilisable, à poser sur chaque écran de liste. Il exporte le module
@@ -103,6 +105,8 @@ import { ExportService, FormatExport } from './export.service';
 })
 export class ExportButtonComponent {
   private readonly service = inject(ExportService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly toast = inject(ToastService);
 
   readonly resource = input.required<string>();
   readonly params = input<Record<string, unknown>>({});
@@ -121,12 +125,16 @@ export class ExportButtonComponent {
     this.ouvert.set(false);
   }
 
-  protected exporter(format: FormatExport): void {
+  protected async exporter(format: FormatExport): Promise<void> {
     this.ouvert.set(false);
-    if (!this.filtresActifs() && !confirm(
-      "Aucun filtre n'est appliqué : l'export contiendra l'ensemble des données de votre périmètre. Continuer ?",
-    )) {
-      return;
+    if (!this.filtresActifs()) {
+      const ok = await this.confirm.ask({
+        title: 'Exporter sans filtre ?',
+        message:
+          "Aucun filtre n'est appliqué : l'export contiendra l'ensemble des données de votre périmètre. Continuer ?",
+        confirmLabel: 'Exporter tout',
+      });
+      if (!ok) return;
     }
     this.telechargement.set(true);
     this.erreur.set(null);
@@ -134,10 +142,12 @@ export class ExportButtonComponent {
       next: (reponse) => {
         this.service.enregistrer(reponse, `${this.resource()}.${format.toLowerCase()}`);
         this.telechargement.set(false);
+        this.toast.success('Export généré', `${this.resource()}.${format.toLowerCase()}`);
       },
       error: () => {
         this.erreur.set('Export impossible.');
         this.telechargement.set(false);
+        this.toast.error('Export impossible', 'Veuillez réessayer.');
       },
     });
   }

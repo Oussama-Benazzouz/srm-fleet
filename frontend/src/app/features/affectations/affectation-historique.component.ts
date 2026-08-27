@@ -72,7 +72,7 @@ import { Affectation } from './affectation.models';
     </section>
   `,
   styles: [`
-    .page { display:flex; flex-direction:column; gap:var(--s-5); max-width:1180px; }
+    .page { display:flex; flex-direction:column; gap:var(--s-5); }
     .page__head p { margin-top:var(--s-1); }
     .page__title { display:flex; align-items:center; gap:var(--s-3); }
     .count { display:inline-flex; align-items:center; justify-content:center; min-width:1.5rem; height:1.5rem; padding:0 var(--s-2); font-size:var(--fs-xs); font-weight:600; color:var(--c-text-muted); background:var(--c-surface-alt); border-radius:var(--r-full); }

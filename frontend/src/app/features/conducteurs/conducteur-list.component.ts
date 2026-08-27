@@ -6,6 +6,8 @@ import { Conducteur } from './conducteur.models';
 import { AuthService } from '../../core/auth/auth.service';
 import { AdministrationService } from '../administration/administration.service';
 import { Departement, Province } from '../administration/utilisateur.models';
+import { ConfirmService } from '../../core/ui/confirm.service';
+import { ToastService } from '../../core/ui/toast.service';
 
 @Component({
   selector: 'app-conducteur-list',
@@ -155,9 +157,7 @@ import { Departement, Province } from '../administration/utilisateur.models';
                     </td>
                     <td>
                       <div class="ctable__actions">
-                        <a class="btn btn--sm" [routerLink]="[c.id]">
-                          {{ isAdmin() ? 'Modifier' : 'Consulter' }}
-                        </a>
+                        <a class="btn btn--sm" [routerLink]="[c.id]">Consulter</a>
                         <a class="btn btn--sm" [routerLink]="['/affectations/historique/conducteur', c.id]">
                           Historique
                         </a>
@@ -198,7 +198,6 @@ import { Departement, Province } from '../administration/utilisateur.models';
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1180px;
       }
 
       /* --- En-tête --- */
@@ -426,6 +425,8 @@ export class ConducteurListComponent implements OnInit {
   private readonly service = inject(ConducteurService);
   private readonly referentiel = inject(AdministrationService);
   private readonly auth = inject(AuthService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly toast = inject(ToastService);
 
   protected readonly isAdmin = this.auth.isAdmin;
 
@@ -497,18 +498,20 @@ export class ConducteurListComponent implements OnInit {
     return `${c.prenom.charAt(0)}${c.nom.charAt(0)}`.toUpperCase();
   }
 
-  protected supprimer(c: Conducteur): void {
-    if (!confirm(`Supprimer définitivement ${c.prenom} ${c.nom} et ses permis ?`)) return;
+  protected async supprimer(c: Conducteur): Promise<void> {
+    const ok = await this.confirm.askDelete(`le conducteur ${c.prenom} ${c.nom} et ses permis`);
+    if (!ok) return;
     this.busyId.set(c.id);
     this.error.set(null);
     this.service.supprimer(c.id).subscribe({
       next: () => {
         this.conducteurs.update((list) => list.filter((x) => x.id !== c.id));
         this.busyId.set(null);
+        this.toast.success('Conducteur supprimé', `${c.prenom} ${c.nom}`);
       },
-      error: () => {
-        this.error.set('La suppression a échoué.');
+      error: (e) => {
         this.busyId.set(null);
+        this.toast.error('Suppression impossible', e?.error?.detail);
       },
     });
   }

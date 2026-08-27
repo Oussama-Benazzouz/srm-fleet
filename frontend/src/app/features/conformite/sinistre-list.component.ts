@@ -130,7 +130,6 @@ import { OptionVehicule, Sinistre, STATUT_SINISTRE_LABELS, StatutSinistre } from
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1180px;
       }
       .page__head {
         display: flex;

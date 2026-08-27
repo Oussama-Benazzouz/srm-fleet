@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
+import { ToastService } from '../../core/ui/toast.service';
 import { FlotteService } from '../vehicules/flotte.service';
 import { Fournisseur, TYPE_FOURNISSEUR_LABELS, TypeFournisseur } from '../vehicules/flotte.models';
 
@@ -118,7 +119,6 @@ import { Fournisseur, TYPE_FOURNISSEUR_LABELS, TypeFournisseur } from '../vehicu
         display: flex;
         flex-direction: column;
         gap: var(--s-5);
-        max-width: 1000px;
       }
 
       .page__head {
@@ -245,6 +245,7 @@ export class FournisseurListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(FlotteService);
   private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   protected readonly isAdmin = this.auth.isAdmin;
 
@@ -297,14 +298,16 @@ export class FournisseurListComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     this.service.creerFournisseur(this.form.getRawValue()).subscribe({
-      next: () => {
+      next: (f) => {
         this.form.reset({ type: 'LOUEUR', raisonSociale: '', contact: null, adresseFacturation: null });
         this.submitted.set(false);
         this.saving.set(false);
         this.charger();
+        this.toast.success('Fournisseur ajouté', f.raisonSociale);
       },
       error: (e) => {
         this.error.set(e?.error?.detail ?? "L'ajout du fournisseur a échoué.");
+        this.toast.error('Ajout impossible', e?.error?.detail);
         this.saving.set(false);
       },
     });

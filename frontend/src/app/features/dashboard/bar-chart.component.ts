@@ -54,9 +54,9 @@ import { CompteParLibelle } from './dashboard.models';
         font-variant-numeric: tabular-nums;
       }
       .bar__track {
-        height: 10px;
+        height: 9px;
         border-radius: var(--r-full);
-        background: var(--c-surface-alt);
+        background: var(--chart-track);
         overflow: hidden;
       }
       .bar__fill {
@@ -70,7 +70,7 @@ import { CompteParLibelle } from './dashboard.models';
 })
 export class BarChartComponent {
   readonly items = input.required<CompteParLibelle[]>();
-  readonly couleur = input<string>('var(--c-accent)');
+  readonly couleur = input<string>('var(--chart-1)');
 
   private readonly max = computed(() =>
     Math.max(1, ...this.items().map((i) => i.valeur)),

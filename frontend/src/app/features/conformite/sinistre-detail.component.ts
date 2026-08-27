@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
+import { ToastService } from '../../core/ui/toast.service';
 import { ConformiteService } from './conformite.service';
 import {
   PieceJointe,
@@ -15,12 +16,18 @@ import {
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="page">
+    <section class="page page--form">
+      <a routerLink="/sinistres" class="back-link">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path d="M12 5l-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Sinistres
+      </a>
+
       <header class="page__head">
         <div>
-          <a routerLink="/sinistres" class="back">← Sinistres</a>
-          <h2>Sinistre</h2>
-          <p class="text-muted text-sm">Fiche du sinistre, suivi du statut et pièces jointes.</p>
+          <h1>Sinistre</h1>
+          <p class="page__subtitle">Fiche du sinistre, suivi du statut et pièces jointes.</p>
         </div>
       </header>
 
@@ -130,31 +137,6 @@ import {
   `,
   styles: [
     `
-      .page {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-5);
-        max-width: 720px;
-      }
-      .back {
-        display: inline-block;
-        margin-bottom: var(--s-2);
-        font-size: var(--fs-sm);
-        color: var(--c-text-muted);
-        text-decoration: none;
-      }
-      .back:hover {
-        color: var(--c-text);
-      }
-      .page__head p {
-        margin-top: var(--s-1);
-      }
-      .page__panel {
-        padding: var(--s-5);
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-4);
-      }
       .grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -241,6 +223,7 @@ import {
 export class SinistreDetailComponent implements OnInit {
   private readonly service = inject(ConformiteService);
   private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
 
   protected readonly sinistre = signal<Sinistre | null>(null);
   protected readonly documents = signal<PieceJointe[]>([]);
@@ -288,9 +271,10 @@ export class SinistreDetailComponent implements OnInit {
       next: (s) => {
         this.sinistre.set(s);
         this.busy.set(false);
+        this.toast.success('Statut mis à jour', this.statutLabel(s.statut));
       },
       error: (e) => {
-        this.error.set(e?.error?.detail ?? 'Changement de statut impossible.');
+        this.toast.error('Changement impossible', e?.error?.detail);
         this.busy.set(false);
       },
     });
@@ -315,9 +299,10 @@ export class SinistreDetailComponent implements OnInit {
         this.fichierChoisi.set(null);
         this.uploading.set(false);
         this.chargerDocuments();
+        this.toast.success('Pièce jointe ajoutée');
       },
       error: (e) => {
-        this.error.set(e?.error?.detail ?? 'Téléversement impossible.');
+        this.toast.error('Téléversement impossible', e?.error?.detail);
         this.uploading.set(false);
       },
     });
