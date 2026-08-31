@@ -141,7 +141,7 @@ export class SinistreFormComponent implements OnInit {
     this.service.creerSinistre(this.form.getRawValue()).subscribe({
       // On ouvre la fiche pour permettre l'ajout de pièces jointes.
       next: (s) => {
-        this.toast.success('Sinistre déclaré', 'Ajoutez les pièces jointes si besoin.');
+        this.toast.success('Sinistre déclaré', 'Le véhicule a été automatiquement immobilisé.');
         this.router.navigate(['/sinistres', s.id]);
       },
       error: (e) => {

@@ -8,6 +8,7 @@ import ma.srm.fleet.common.exception.BusinessException;
 import ma.srm.fleet.conformite.sinistre.dto.SinistreRequest;
 import ma.srm.fleet.conformite.sinistre.dto.SinistreResponse;
 import ma.srm.fleet.referentiel.province.Province;
+import ma.srm.fleet.referentiel.vehicule.StatutVehicule;
 import ma.srm.fleet.referentiel.vehicule.Vehicule;
 import ma.srm.fleet.referentiel.vehicule.VehiculeRepository;
 import ma.srm.fleet.security.UserPrincipal;
@@ -36,6 +37,11 @@ public class SinistreService {
      * RF-23 : déclarer un sinistre. Il est rattaché au véhicule et, si elle existe (RG7), à
      * l'affectation active au moment des faits — résolue automatiquement pour identifier sans
      * ambiguïté le conducteur responsable. Le sinistre naît au statut OUVERT.
+     *
+     * <p>La déclaration immobilise automatiquement le véhicule (statut IMMOBILISE) : il n'est
+     * alors plus affectable (contrôle appliqué à la création d'affectation). Les deux écritures
+     * partagent la transaction de la méthode : soit le sinistre est créé ET le véhicule
+     * immobilisé, soit rien n'est persisté.</p>
      */
     public SinistreResponse creer(SinistreRequest req, UserPrincipal principal) {
         Vehicule v = chargerVehicule(req.vehiculeId(), principal);
@@ -48,7 +54,22 @@ public class SinistreService {
         s.setDateSinistre(req.dateSinistre());
         s.setDescription(req.description());
         s.setStatut(StatutSinistre.OUVERT);
-        return SinistreMapper.toResponse(sinistreRepository.save(s));
+        SinistreResponse reponse = SinistreMapper.toResponse(sinistreRepository.save(s));
+
+        immobiliser(v);
+        return reponse;
+    }
+
+    /**
+     * Immobilise le véhicule suite à un sinistre. Idempotent si déjà immobilisé ; ne ressuscite
+     * pas un véhicule sorti du parc (état terminal). Le retour en service reste une action
+     * manuelle (modification de la fiche véhicule) : aucun retour automatique à DISPONIBLE.
+     */
+    private void immobiliser(Vehicule v) {
+        if (v.getStatut() != StatutVehicule.IMMOBILISE && v.getStatut() != StatutVehicule.SORTI_DU_PARC) {
+            v.setStatut(StatutVehicule.IMMOBILISE);
+            vehiculeRepository.save(v);
+        }
     }
 
     /** RF-24 : avancer le statut en respectant l'ordre ouvert → en_cours → clôturé. */
