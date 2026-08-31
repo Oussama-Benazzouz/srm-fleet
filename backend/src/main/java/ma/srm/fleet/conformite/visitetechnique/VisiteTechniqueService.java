@@ -1,5 +1,6 @@
 package ma.srm.fleet.conformite.visitetechnique;
 
+import java.time.LocalDate;
 import java.util.List;
 import ma.srm.fleet.admin.utilisateur.RoleUtilisateur;
 import ma.srm.fleet.affectation.Affectation;
@@ -12,6 +13,7 @@ import ma.srm.fleet.referentiel.province.Province;
 import ma.srm.fleet.referentiel.vehicule.Vehicule;
 import ma.srm.fleet.referentiel.vehicule.VehiculeRepository;
 import ma.srm.fleet.security.UserPrincipal;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class VisiteTechniqueService {
+
+    private static final String MSG_CHEVAUCHEMENT =
+        "Ce véhicule a déjà une visite technique dont la période chevauche celle saisie";
 
     private final VisiteTechniqueRepository visiteRepository;
     private final VehiculeRepository vehiculeRepository;
@@ -40,25 +45,28 @@ public class VisiteTechniqueService {
      */
     public VisiteResponse creer(VisiteRequest req, UserPrincipal principal) {
         Vehicule v = chargerVehicule(req.vehiculeId(), principal);
-        if (req.dateEcheance().isBefore(req.dateVisite())) {
-            throw new BusinessException(
-                "La date d'échéance doit être postérieure ou égale à la date de visite", HttpStatus.BAD_REQUEST);
-        }
-        Conducteur accompagnateur = affectationRepository.findCouvrantDate(v.getId(), req.dateVisite()).stream()
-            .findFirst()
-            .map(Affectation::getConducteur)
-            .orElseThrow(() -> new BusinessException(
-                "Aucune affectation ne couvre la date de visite : "
-                    + "le conducteur accompagnateur ne peut être déterminé (RG11)",
-                HttpStatus.CONFLICT));
+        validerDates(req);
+        verifierChevauchement(v.getId(), req.dateVisite(), req.dateEcheance(), null);
 
         VisiteTechnique visite = new VisiteTechnique();
         visite.setVehicule(v);
-        visite.setDateVisite(req.dateVisite());
-        visite.setDateEcheance(req.dateEcheance());
-        visite.setNomCompagnie(req.nomCompagnie());
-        visite.setConducteurAccompagnateur(accompagnateur);
-        return VisiteTechniqueMapper.toResponse(visiteRepository.save(visite));
+        appliquer(visite, req, v);
+        return VisiteTechniqueMapper.toResponse(enregistrer(visite));
+    }
+
+    /** Modifier une visite existante (mêmes règles ; exclusion de soi ; accompagnateur re-dérivé). */
+    public VisiteResponse modifier(Long id, VisiteRequest req, UserPrincipal principal) {
+        VisiteTechnique visite = visiteRepository.findById(id)
+            .orElseThrow(() -> new BusinessException("Visite technique introuvable : " + id, HttpStatus.NOT_FOUND));
+        verifierPortee(visite.getVehicule(), principal, "Visite technique introuvable : " + id);
+
+        Vehicule v = chargerVehicule(req.vehiculeId(), principal);
+        validerDates(req);
+        verifierChevauchement(v.getId(), req.dateVisite(), req.dateEcheance(), id);
+
+        visite.setVehicule(v);
+        appliquer(visite, req, v);
+        return VisiteTechniqueMapper.toResponse(enregistrer(visite));
     }
 
     @Transactional(readOnly = true)
@@ -77,6 +85,44 @@ public class VisiteTechniqueService {
             .orElseThrow(() -> new BusinessException("Visite technique introuvable : " + id, HttpStatus.NOT_FOUND));
         verifierPortee(visite.getVehicule(), principal, "Visite technique introuvable : " + id);
         return VisiteTechniqueMapper.toResponse(visite);
+    }
+
+    /** fin >= début (même jour autorisé). */
+    private void validerDates(VisiteRequest req) {
+        if (req.dateEcheance().isBefore(req.dateVisite())) {
+            throw new BusinessException(
+                "La date d'échéance doit être postérieure ou égale à la date de visite", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void verifierChevauchement(Long vehiculeId, LocalDate debut, LocalDate fin, Long excludeId) {
+        if (visiteRepository.existsChevauchement(vehiculeId, debut, fin, excludeId)) {
+            throw new BusinessException(MSG_CHEVAUCHEMENT, HttpStatus.CONFLICT);
+        }
+    }
+
+    /** Renseigne les champs + le conducteur accompagnateur dérivé de l'affectation (RG11). */
+    private void appliquer(VisiteTechnique visite, VisiteRequest req, Vehicule v) {
+        Conducteur accompagnateur = affectationRepository.findCouvrantDate(v.getId(), req.dateVisite()).stream()
+            .findFirst()
+            .map(Affectation::getConducteur)
+            .orElseThrow(() -> new BusinessException(
+                "Aucune affectation ne couvre la date de visite : "
+                    + "le conducteur accompagnateur ne peut être déterminé (RG11)",
+                HttpStatus.CONFLICT));
+        visite.setDateVisite(req.dateVisite());
+        visite.setDateEcheance(req.dateEcheance());
+        visite.setNomCompagnie(req.nomCompagnie());
+        visite.setConducteurAccompagnateur(accompagnateur);
+    }
+
+    /** Filet de sécurité concurrence : la contrainte d'exclusion en base tranche en cas de course. */
+    private VisiteTechnique enregistrer(VisiteTechnique visite) {
+        try {
+            return visiteRepository.saveAndFlush(visite);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(MSG_CHEVAUCHEMENT, HttpStatus.CONFLICT);
+        }
     }
 
     /** Charge le véhicule cible en masquant son existence à un responsable hors province (404). */

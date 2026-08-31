@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -61,16 +62,27 @@ class VisiteTechniqueServiceTest {
         return a;
     }
 
+    private VisiteTechnique visiteExistante(Long id) {
+        VisiteTechnique vt = new VisiteTechnique();
+        vt.setId(id); vt.setVehicule(vehicule(1L));
+        vt.setDateVisite(LocalDate.parse("2026-01-01"));
+        vt.setDateEcheance(LocalDate.parse("2027-01-01"));
+        return vt;
+    }
+
+    private VisiteRequest req(String visite, String echeance) {
+        return new VisiteRequest(9L, LocalDate.parse(visite), LocalDate.parse(echeance), "Norisko");
+    }
+
     @Test
     void creer_deriveConducteurAccompagnateur_depuisAffectation() {
         Vehicule v = vehicule(1L);
         when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(v));
         when(affectationRepository.findCouvrantDate(eq(9L), any(LocalDate.class)))
             .thenReturn(List.of(affectation(v, conducteur())));
-        when(visiteRepository.save(any(VisiteTechnique.class))).thenAnswer(i -> i.getArgument(0));
+        when(visiteRepository.saveAndFlush(any(VisiteTechnique.class))).thenAnswer(i -> i.getArgument(0));
 
-        VisiteResponse res = service.creer(
-            new VisiteRequest(9L, LocalDate.parse("2026-06-01"), LocalDate.parse("2027-06-01"), "Norisko"),
+        VisiteResponse res = service.creer(req("2026-06-01", "2027-06-01"),
             principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null));
 
         assertThat(res.conducteurId()).isEqualTo(5L);
@@ -79,11 +91,20 @@ class VisiteTechniqueServiceTest {
     }
 
     @Test
+    void creer_chevauchement_leve409() {
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));
+        when(visiteRepository.existsChevauchement(eq(9L), any(), any(), isNull())).thenReturn(true);
+        assertThatThrownBy(() -> service.creer(req("2026-06-01", "2027-06-01"),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null)))
+            .isInstanceOf(BusinessException.class)
+            .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    @Test
     void creer_sansAffectationCouvrante_leve409() {
         when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));
         when(affectationRepository.findCouvrantDate(eq(9L), any(LocalDate.class))).thenReturn(List.of());
-        assertThatThrownBy(() -> service.creer(
-            new VisiteRequest(9L, LocalDate.parse("2026-06-01"), LocalDate.parse("2027-06-01"), "Norisko"),
+        assertThatThrownBy(() -> service.creer(req("2026-06-01", "2027-06-01"),
             principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null)))
             .isInstanceOf(BusinessException.class)
             .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.CONFLICT));
@@ -92,8 +113,7 @@ class VisiteTechniqueServiceTest {
     @Test
     void creer_echeanceAvantVisite_leve400() {
         when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));
-        assertThatThrownBy(() -> service.creer(
-            new VisiteRequest(9L, LocalDate.parse("2026-06-01"), LocalDate.parse("2026-05-01"), "Norisko"),
+        assertThatThrownBy(() -> service.creer(req("2026-06-01", "2026-05-01"),
             principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null)))
             .isInstanceOf(BusinessException.class)
             .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
@@ -102,10 +122,37 @@ class VisiteTechniqueServiceTest {
     @Test
     void creer_provincialHorsProvince_leve404() {
         when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));   // province 1
-        assertThatThrownBy(() -> service.creer(
-            new VisiteRequest(9L, LocalDate.parse("2026-06-01"), LocalDate.parse("2027-06-01"), "Norisko"),
+        assertThatThrownBy(() -> service.creer(req("2026-06-01", "2027-06-01"),
             principal(RoleUtilisateur.RESPONSABLE_PROVINCIAL, 2L)))                    // provincial de 2
             .isInstanceOf(BusinessException.class)
             .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void modifier_sansChevauchement_ok_excluantSoi() {
+        Vehicule v = vehicule(1L);
+        when(visiteRepository.findById(7L)).thenReturn(Optional.of(visiteExistante(7L)));
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(v));
+        when(affectationRepository.findCouvrantDate(eq(9L), any(LocalDate.class)))
+            .thenReturn(List.of(affectation(v, conducteur())));
+        when(visiteRepository.saveAndFlush(any(VisiteTechnique.class))).thenAnswer(i -> i.getArgument(0));
+        // existsChevauchement(..., excludeId=7) renvoie false par défaut → pas de chevauchement avec soi-même
+
+        VisiteResponse res = service.modifier(7L, req("2026-02-01", "2027-02-01"),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null));
+
+        assertThat(res.conducteurId()).isEqualTo(5L);
+    }
+
+    @Test
+    void modifier_versPeriodeDuneAutre_leve409() {
+        when(visiteRepository.findById(7L)).thenReturn(Optional.of(visiteExistante(7L)));
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(vehicule(1L)));
+        when(visiteRepository.existsChevauchement(eq(9L), any(), any(), eq(7L))).thenReturn(true);
+
+        assertThatThrownBy(() -> service.modifier(7L, req("2026-03-01", "2027-03-01"),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null)))
+            .isInstanceOf(BusinessException.class)
+            .satisfies(e -> assertThat(((BusinessException) e).getStatus()).isEqualTo(HttpStatus.CONFLICT));
     }
 }

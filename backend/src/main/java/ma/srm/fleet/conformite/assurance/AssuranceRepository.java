@@ -18,4 +18,18 @@ public interface AssuranceRepository
     @Query("select a from Assurance a where a.dateEcheance <= :limite "
         + "and a.dateEcheance = (select max(x.dateEcheance) from Assurance x where x.vehicule = a.vehicule)")
     List<Assurance> findEcheancesAControler(@Param("limite") LocalDate limite);
+
+    /**
+     * Existe-t-il, pour ce véhicule, une assurance dont la période [début, échéance] chevauche
+     * [{@code debut}, {@code fin}] ? Bornes inclusives : deux périodes se chevauchent dès qu'elles
+     * partagent au moins un jour. {@code excludeId} (nullable) exclut l'enregistrement en cours de
+     * modification pour qu'il ne se chevauche pas avec lui-même.
+     */
+    @Query("select (count(a) > 0) from Assurance a where a.vehicule.id = :vehiculeId "
+        + "and (:excludeId is null or a.id <> :excludeId) "
+        + "and a.dateDebut <= :fin and a.dateEcheance >= :debut")
+    boolean existsChevauchement(@Param("vehiculeId") Long vehiculeId,
+                                @Param("debut") LocalDate debut,
+                                @Param("fin") LocalDate fin,
+                                @Param("excludeId") Long excludeId);
 }

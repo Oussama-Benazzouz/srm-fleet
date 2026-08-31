@@ -26,6 +26,13 @@ public class AssuranceController {
         return service.creer(req, principal);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATEUR_CENTRAL','RESPONSABLE_PROVINCIAL')")
+    public AssuranceResponse modifier(@PathVariable Long id, @Valid @RequestBody AssuranceRequest req,
+                                      @AuthenticationPrincipal UserPrincipal principal) {
+        return service.modifier(id, req, principal);
+    }
+
     @GetMapping
     public List<AssuranceResponse> lister(@RequestParam(required = false) Long vehiculeId,
                                           @AuthenticationPrincipal UserPrincipal principal) {
