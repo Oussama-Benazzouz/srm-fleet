@@ -11,6 +11,7 @@ import ma.srm.fleet.conducteur.conducteur.Conducteur;
 import ma.srm.fleet.conformite.sinistre.dto.SinistreRequest;
 import ma.srm.fleet.conformite.sinistre.dto.SinistreResponse;
 import ma.srm.fleet.referentiel.province.Province;
+import ma.srm.fleet.referentiel.vehicule.StatutVehicule;
 import ma.srm.fleet.referentiel.vehicule.Vehicule;
 import ma.srm.fleet.referentiel.vehicule.VehiculeRepository;
 import ma.srm.fleet.security.UserPrincipal;
@@ -27,6 +28,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,6 +82,36 @@ class SinistreServiceTest {
         assertThat(res.statut()).isEqualTo(StatutSinistre.OUVERT);
         assertThat(res.affectationId()).isEqualTo(3L);
         assertThat(res.conducteurNomComplet()).isEqualTo("Sara Alaoui");
+    }
+
+    @Test
+    void creer_immobilise_le_vehicule() {
+        Vehicule v = vehicule(1L);
+        v.setStatut(StatutVehicule.DISPONIBLE);
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(v));
+        when(affectationRepository.findCouvrantDate(eq(9L), any(LocalDate.class))).thenReturn(List.of());
+        when(sinistreRepository.save(any(Sinistre.class))).thenAnswer(i -> i.getArgument(0));
+
+        service.creer(new SinistreRequest(9L, LocalDate.parse("2026-06-01"), "Choc"),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null));
+
+        assertThat(v.getStatut()).isEqualTo(StatutVehicule.IMMOBILISE);
+        verify(vehiculeRepository).save(v);
+    }
+
+    @Test
+    void creer_vehiculeSortiDuParc_nonImmobilise() {
+        Vehicule v = vehicule(1L);
+        v.setStatut(StatutVehicule.SORTI_DU_PARC);
+        when(vehiculeRepository.findById(9L)).thenReturn(Optional.of(v));
+        when(affectationRepository.findCouvrantDate(eq(9L), any(LocalDate.class))).thenReturn(List.of());
+        when(sinistreRepository.save(any(Sinistre.class))).thenAnswer(i -> i.getArgument(0));
+
+        service.creer(new SinistreRequest(9L, LocalDate.parse("2026-06-01"), "Choc"),
+            principal(RoleUtilisateur.ADMINISTRATEUR_CENTRAL, null));
+
+        assertThat(v.getStatut()).isEqualTo(StatutVehicule.SORTI_DU_PARC);
+        verify(vehiculeRepository, never()).save(any(Vehicule.class));
     }
 
     @Test
